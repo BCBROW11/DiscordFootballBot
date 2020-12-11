@@ -81,7 +81,7 @@ async def scores(ctx, *args):
     x = 0
     if args:
         for i in range(gameCount):
-            if scores[x].home == args[0] or scores[x].away == args[0]:
+            if scores[x].home.lower() == args[0].lower() or scores[x].away.lower() == args[0].lower():
                 if scores[x].status == "Pregame":
                     gmStr = gmStr + '{:5}{:8}'.format(scores[x].away, scores[x].awayScore)
                     gmStr = gmStr + "\n{:5}{:8}".format(scores[x].home, scores[x].homeScore)
