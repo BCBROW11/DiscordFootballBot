@@ -5,15 +5,78 @@ import yaml
 from discord.ext import commands
 from prettytable import PrettyTable
 import http.client
+import logging
+import threading
+import time
 from bs4 import BeautifulSoup
 
 # Credentials
-TOKEN = '<TOKEN>'
+TOKEN = 'BOTTOKEN'
 
 # Create bot
 client = commands.Bot(command_prefix='!')
 
-# Startup Information
+def get_html():
+    while(True):
+        headers = {'User-Agent' : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36'}
+        request = requests.get("https://www.pro-football-reference.com/years/2020/", headers = headers)
+        global soup
+        soup = BeautifulSoup(request.content, 'html.parser')
+        global js
+        js = {}
+        global afce
+        global afcw
+        global afcn
+        global afcs
+        global nfce
+        global nfcw
+        global nfcn
+        global nfcs
+
+        afce = "AFC East"
+        afcw = "AFC West"
+        afcn = "AFC North"
+        afcs = "AFC South"
+        nfce = "NFC East"
+        nfcw = "NFC West"
+        nfcn = "NFC North"
+        nfcs = "NFC South"
+        js[afce] = []
+        js[afcw] = []
+        js[afcn] = []
+        js[afcs] = []
+        js[nfce] = []
+        js[nfcw] = []
+        js[nfcn] = []
+        js[nfcs] = []
+
+        for s in soup.find_all('tr'):
+            tn = s.find(attrs={'data-stat': 'team'})
+            w = s.find(attrs={'data-stat': 'wins'})
+            l = s.find(attrs={'data-stat': 'losses'})
+            t = s.find(attrs={'data-stat': 'ties'})
+            #AFC Teams
+            if tn != None and (tn.text == "Buffalo Bills" or tn.text == "Miami Dolphins" or tn.text == "New England Patriots" or tn.text == "New York Jets"):
+                js[afce].append({"team":tn.text, "wins":w.text, "losses":l.text, "ties":t.text})
+            if tn != None and (tn.text == "Pittsburgh Steelers" or tn.text == "Cleveland Browns" or tn.text == "Baltimore Ravens" or tn.text == "Cincinnati Bengals"):
+                js[afcn].append({"team":tn.text, "wins":w.text, "losses":l.text, "ties":t.text})
+            if tn != None and (tn.text == "Indianapolis Colts" or tn.text == "Tennessee Titans" or tn.text == "Houston Texans" or tn.text == "Jacksonville Jaguars"):
+                js[afcs].append({"team":tn.text, "wins":w.text, "losses":l.text, "ties":t.text})
+            if tn != None and (tn.text == "Kansas City Chiefs" or tn.text == "Las Vegas Raiders" or tn.text == "Denver Broncos" or tn.text == "Los Angeles Chargers"):
+                js[afcw].append({"team":tn.text, "wins":w.text, "losses":l.text, "ties":t.text})
+
+            #NFC Teams
+            if tn != None and (tn.text == "Washington Football Team" or tn.text == "Dallas Cowboys" or tn.text == "New York Giants" or tn.text == "Philadelphia Eagles"):
+                js[nfce].append({"team":tn.text, "wins":w.text, "losses":l.text, "ties":t.text})
+            if tn != None and (tn.text == "Green Bay Packers" or tn.text == "Minnesota Vikings" or tn.text == "Detroit Lions" or tn.text == "Chicago Bears"):
+                js[nfcn].append({"team":tn.text, "wins":w.text, "losses":l.text, "ties":t.text})
+            if tn != None and (tn.text == "Tampa Bay Buccaneers" or tn.text == "New Orleans Saints" or tn.text == "Atlanta Falcons" or tn.text == "Carolina Panthers"):
+                js[nfcs].append({"team":tn.text, "wins":w.text, "losses":l.text, "ties":t.text})
+            if tn != None and (tn.text == "San Francisco 49ers" or tn.text == "Arizona Cardinals" or tn.text == "Seattle Seahawks" or tn.text == "Los Angeles Rams"):
+                js[nfcw].append({"team":tn.text, "wins":w.text, "losses":l.text, "ties":t.text})
+        print("done")
+        time.sleep(3600)
+
 class game:
     def __init__(self, day, home, homeScore, away, awayScore, status, timeInQuarter, gameTime):
         self.day = day
@@ -29,25 +92,148 @@ class game:
 async def on_ready():
     print('Connected to bot: {}'.format(client.user.name))
     print('Bot ID: {}'.format(client.user.id))
-
+    req = threading.Thread(target=get_html)
+    req.start()
 # Command
 @client.command()
 
-async def standings(ctx):
-    headers = {'User-Agent' : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36'}
+async def standings(ctx, *args):
 
-    request = requests.get("https://www.pro-football-reference.com/", headers = headers)
-    soup = BeautifulSoup(request.content, 'html.parser')
-    result = soup.find(id="all_AFC")
-    items = []
-    for child in result.recursiveChildGenerator():
-        items.append(child)
+    stStr = "```\n"
 
-
+    if args:
+        if args[0].lower() == "nfcw":
+            stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(nfcw, "W", "L", "T")
+            stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[nfcw][0]["team"], js[nfcw][0]["wins"], js[nfcw][0]["losses"], js[nfcw][0]["ties"])
+            stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[nfcw][1]["team"], js[nfcw][1]["wins"], js[nfcw][1]["losses"], js[nfcw][1]["ties"])
+            stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[nfcw][2]["team"], js[nfcw][2]["wins"], js[nfcw][2]["losses"], js[nfcw][2]["ties"])
+            stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[nfcw][3]["team"], js[nfcw][3]["wins"], js[nfcw][3]["losses"], js[nfcw][3]["ties"])
+            stStr = stStr + "\n```"
+            await ctx.send(
+                stStr
+            )
+            return
+        elif args[0].lower() == "nfce":
+            stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(nfce, "W", "L", "T")
+            stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[nfce][0]["team"], js[nfce][0]["wins"], js[nfce][0]["losses"], js[nfce][0]["ties"])
+            stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[nfce][1]["team"], js[nfce][1]["wins"], js[nfce][1]["losses"], js[nfce][1]["ties"])
+            stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[nfce][2]["team"], js[nfce][2]["wins"], js[nfce][2]["losses"], js[nfce][2]["ties"])
+            stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[nfce][3]["team"], js[nfce][3]["wins"], js[nfce][3]["losses"], js[nfce][3]["ties"])
+            stStr = stStr + "\n```"
+            await ctx.send(
+                stStr
+            )
+            return
+        elif args[0].lower() == "nfcs":
+            stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(nfcs, "W", "L", "T")
+            stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[nfcs][0]["team"], js[nfcs][0]["wins"], js[nfcs][0]["losses"], js[nfcs][0]["ties"])
+            stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[nfcs][1]["team"], js[nfcs][1]["wins"], js[nfcs][1]["losses"], js[nfcs][1]["ties"])
+            stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[nfcs][2]["team"], js[nfcs][2]["wins"], js[nfcs][2]["losses"], js[nfcs][2]["ties"])
+            stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[nfcs][3]["team"], js[nfcs][3]["wins"], js[nfcs][3]["losses"], js[nfcs][3]["ties"])
+            stStr = stStr + "\n```"
+            await ctx.send(
+                stStr
+            )
+            return
+        elif args[0].lower() == "nfcn":
+            stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(nfcn, "W", "L", "T")
+            stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[nfcn][0]["team"], js[nfcn][0]["wins"], js[nfcn][0]["losses"], js[nfcn][0]["ties"])
+            stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[nfcn][1]["team"], js[nfcn][1]["wins"], js[nfcn][1]["losses"], js[nfcn][1]["ties"])
+            stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[nfcn][2]["team"], js[nfcn][2]["wins"], js[nfcn][2]["losses"], js[nfcn][2]["ties"])
+            stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[nfcn][3]["team"], js[nfcn][3]["wins"], js[nfcn][3]["losses"], js[nfcn][3]["ties"])
+            stStr = stStr + "\n```"
+            await ctx.send(
+                stStr
+            )
+            return
+        elif args[0].lower() == "afcw":
+            stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(afcw, "W", "L", "T")
+            stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[afcw][0]["team"], js[afcw][0]["wins"], js[afcw][0]["losses"], js[afcw][0]["ties"])
+            stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[afcw][1]["team"], js[afcw][1]["wins"], js[afcw][1]["losses"], js[afcw][1]["ties"])
+            stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[afcw][2]["team"], js[afcw][2]["wins"], js[afcw][2]["losses"], js[afcw][2]["ties"])
+            stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[afcw][3]["team"], js[afcw][3]["wins"], js[afcw][3]["losses"], js[afcw][3]["ties"])
+            stStr = stStr + "\n```"
+            await ctx.send(
+                stStr
+            )
+            return
+        elif args[0].lower() == "afce":
+            stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(afce, "W", "L", "T")
+            stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[afce][0]["team"], js[afce][0]["wins"], js[afce][0]["losses"], js[afce][0]["ties"])
+            stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[afce][1]["team"], js[afce][1]["wins"], js[afce][1]["losses"], js[afce][1]["ties"])
+            stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[afce][2]["team"], js[afce][2]["wins"], js[afce][2]["losses"], js[afce][2]["ties"])
+            stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[afce][3]["team"], js[afce][3]["wins"], js[afce][3]["losses"], js[afce][3]["ties"])
+            stStr = stStr + "\n```"
+            await ctx.send(
+                stStr
+            )
+            return
+        elif args[0].lower() == "afcs":
+            stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(afcs, "W", "L", "T")
+            stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[afcs][0]["team"], js[afcs][0]["wins"], js[afcs][0]["losses"], js[afcs][0]["ties"])
+            stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[afcs][1]["team"], js[afcs][1]["wins"], js[afcs][1]["losses"], js[afcs][1]["ties"])
+            stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[afcs][2]["team"], js[afcs][2]["wins"], js[afcs][2]["losses"], js[afcs][2]["ties"])
+            stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[afcs][3]["team"], js[afcs][3]["wins"], js[afcs][3]["losses"], js[afcs][3]["ties"])
+            stStr = stStr + "\n```"
+            await ctx.send(
+                stStr
+            )
+            return
+        elif args[0].lower() == "afcn":
+            stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(afcn, "W", "L", "T")
+            stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[afcn][0]["team"], js[afcn][0]["wins"], js[afcn][0]["losses"], js[afcn][0]["ties"])
+            stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[afcn][1]["team"], js[afcn][1]["wins"], js[afcn][1]["losses"], js[afcn][1]["ties"])
+            stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[afcn][2]["team"], js[afcn][2]["wins"], js[afcn][2]["losses"], js[afcn][2]["ties"])
+            stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[afcn][3]["team"], js[afcn][3]["wins"], js[afcn][3]["losses"], js[afcn][3]["ties"])
+            stStr = stStr + "\n```"
+            await ctx.send(
+                stStr
+            )
+            return
+    stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(afcn, "W", "L", "T")
+    stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[afcn][0]["team"], js[afcn][0]["wins"], js[afcn][0]["losses"], js[afcn][0]["ties"])
+    stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[afcn][1]["team"], js[afcn][1]["wins"], js[afcn][1]["losses"], js[afcn][1]["ties"])
+    stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[afcn][2]["team"], js[afcn][2]["wins"], js[afcn][2]["losses"], js[afcn][2]["ties"])
+    stStr = stStr + '{:25}{:4}{:4}{:4}\n\n'.format(js[afcn][3]["team"], js[afcn][3]["wins"], js[afcn][3]["losses"], js[afcn][3]["ties"])
+    stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(afce, "W", "L", "T")
+    stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[afce][0]["team"], js[afce][0]["wins"], js[afce][0]["losses"], js[afce][0]["ties"])
+    stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[afce][1]["team"], js[afce][1]["wins"], js[afce][1]["losses"], js[afce][1]["ties"])
+    stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[afce][2]["team"], js[afce][2]["wins"], js[afce][2]["losses"], js[afce][2]["ties"])
+    stStr = stStr + '{:25}{:4}{:4}{:4}\n\n'.format(js[afce][3]["team"], js[afce][3]["wins"], js[afce][3]["losses"], js[afce][3]["ties"])
+    stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(afcs, "W", "L", "T")
+    stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[afcs][0]["team"], js[afcs][0]["wins"], js[afcs][0]["losses"], js[afcs][0]["ties"])
+    stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[afcs][1]["team"], js[afcs][1]["wins"], js[afcs][1]["losses"], js[afcs][1]["ties"])
+    stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[afcs][2]["team"], js[afcs][2]["wins"], js[afcs][2]["losses"], js[afcs][2]["ties"])
+    stStr = stStr + '{:25}{:4}{:4}{:4}\n\n'.format(js[afcs][3]["team"], js[afcs][3]["wins"], js[afcs][3]["losses"], js[afcs][3]["ties"])
+    stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(afcw, "W", "L", "T")
+    stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[afcw][0]["team"], js[afcw][0]["wins"], js[afcw][0]["losses"], js[afcw][0]["ties"])
+    stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[afcw][1]["team"], js[afcw][1]["wins"], js[afcw][1]["losses"], js[afcw][1]["ties"])
+    stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[afcw][2]["team"], js[afcw][2]["wins"], js[afcw][2]["losses"], js[afcw][2]["ties"])
+    stStr = stStr + '{:25}{:4}{:4}{:4}\n\n'.format(js[afcw][3]["team"], js[afcw][3]["wins"], js[afcw][3]["losses"], js[afcw][3]["ties"])
+    stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(nfcn, "W", "L", "T")
+    stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[nfcn][0]["team"], js[nfcn][0]["wins"], js[nfcn][0]["losses"], js[nfcn][0]["ties"])
+    stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[nfcn][1]["team"], js[nfcn][1]["wins"], js[nfcn][1]["losses"], js[nfcn][1]["ties"])
+    stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[nfcn][2]["team"], js[nfcn][2]["wins"], js[nfcn][2]["losses"], js[nfcn][2]["ties"])
+    stStr = stStr + '{:25}{:4}{:4}{:4}\n\n'.format(js[nfcn][3]["team"], js[nfcn][3]["wins"], js[nfcn][3]["losses"], js[nfcn][3]["ties"])
+    stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(nfce, "W", "L", "T")
+    stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[nfce][0]["team"], js[nfce][0]["wins"], js[nfce][0]["losses"], js[nfce][0]["ties"])
+    stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[nfce][1]["team"], js[nfce][1]["wins"], js[nfce][1]["losses"], js[nfce][1]["ties"])
+    stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[nfce][2]["team"], js[nfce][2]["wins"], js[nfce][2]["losses"], js[nfce][2]["ties"])
+    stStr = stStr + '{:25}{:4}{:4}{:4}\n\n'.format(js[nfce][3]["team"], js[nfce][3]["wins"], js[nfce][3]["losses"], js[nfce][3]["ties"])
+    stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(nfcs, "W", "L", "T")
+    stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[nfcs][0]["team"], js[nfcs][0]["wins"], js[nfcs][0]["losses"], js[nfcs][0]["ties"])
+    stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[nfcs][1]["team"], js[nfcs][1]["wins"], js[nfcs][1]["losses"], js[nfcs][1]["ties"])
+    stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[nfcs][2]["team"], js[nfcs][2]["wins"], js[nfcs][2]["losses"], js[nfcs][2]["ties"])
+    stStr = stStr + '{:25}{:4}{:4}{:4}\n\n'.format(js[nfcs][3]["team"], js[nfcs][3]["wins"], js[nfcs][3]["losses"], js[nfcs][3]["ties"])
+    stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(nfcw, "W", "L", "T")
+    stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[nfcw][0]["team"], js[nfcw][0]["wins"], js[nfcw][0]["losses"], js[nfcw][0]["ties"])
+    stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[nfcw][1]["team"], js[nfcw][1]["wins"], js[nfcw][1]["losses"], js[nfcw][1]["ties"])
+    stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[nfcw][2]["team"], js[nfcw][2]["wins"], js[nfcw][2]["losses"], js[nfcw][2]["ties"])
+    stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[nfcw][3]["team"], js[nfcw][3]["wins"], js[nfcw][3]["losses"], js[nfcw][3]["ties"])
+    stStr = stStr + "\n```"
     await ctx.send(
-        len(items)
+        stStr
     )
-
 @client.command()
 async def scores(ctx, *args):
 
