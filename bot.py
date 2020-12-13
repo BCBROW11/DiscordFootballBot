@@ -11,10 +11,16 @@ import time
 from bs4 import BeautifulSoup
 
 # Credentials
-TOKEN = 'BOTTOKEN'
+TOKEN = '<TOKEN>'
 
 # Create bot
-client = commands.Bot(command_prefix='!')
+client = commands.Bot(command_prefix='?')
+
+def get_scores():
+    while(True):
+        global scoreRequest
+        scoreRequest = requests.get("http://static.nfl.com/liveupdate/scorestrip/scorestrip.json")
+        time.sleep(60)
 
 def get_html():
     while(True):
@@ -93,12 +99,14 @@ async def on_ready():
     print('Connected to bot: {}'.format(client.user.name))
     print('Bot ID: {}'.format(client.user.id))
     req = threading.Thread(target=get_html)
+    req2 = threading.Thread(target=get_scores)
     req.start()
+    req2.start()
+
 # Command
+
 @client.command()
-
 async def standings(ctx, *args):
-
     stStr = "```\n"
 
     if args:
@@ -234,11 +242,11 @@ async def standings(ctx, *args):
     await ctx.send(
         stStr
     )
+
+
 @client.command()
 async def scores(ctx, *args):
-
-    request = requests.get("http://static.nfl.com/liveupdate/scorestrip/scorestrip.json")
-    str = request.text
+    str = scoreRequest.text
     str = str.replace(",,", ",\"\",")
     str = str.replace(",,", ",\"\",")
     y = json.loads(str)
@@ -438,7 +446,7 @@ async def scores(ctx, *args):
                 if (scores[x].status == "Halftime" or scores[x].status == "Final") and (scores[x+1].status == "Halftime" or scores[x+1].status == "Final") and (scores[x+2].status == "Halftime" or scores[x+2].status == "Final"): #all games on line are at halftime
                     gmStr = gmStr + '{:5}{:8}{:5}{:8}{:5}{:8}'.format(scores[x].away, scores[x].awayScore, scores[x+1].away, scores[x+1].awayScore, scores[x+2].away, scores[x+2].awayScore)
                     gmStr = gmStr + "\n{:5}{:8}{:5}{:8}{:5}{:8}".format(scores[x].home, scores[x].homeScore, scores[x+1].home, scores[x+1].homeScore, scores[x+2].home, scores[x+2].homeScore)
-                    gmStr = gmStr + "\n{:8}{:5}{:8}{:5}{:8}{:5}".format(scores[x].status, scores[x].timeInQuarter, scores[x+1].day, scores[x+1].gameTime, scores[x+2].status, scores[x+2].timeInQuarter)
+                    gmStr = gmStr + "\n{:8}{:5}{:8}{:5}{:8}{:5}".format(scores[x].status, scores[x].timeInQuarter, scores[x+1].status, scores[x+1].timeInQuarter, scores[x+2].status, scores[x+2].timeInQuarter)
                     gmStr = gmStr + "\n\n"
                     x += 3
                 #g1 halftime, g2 not halftime, g3 not halftime
@@ -550,6 +558,13 @@ async def scores(ctx, *args):
 
     await ctx.send(
         gmStr
+    )
+
+@client.command()
+async def NFLBotHelp(ctx):
+    str = "```\n Commands: ?standings | ?standings <conference:division> (afce, nfce, etc) | ?scores | ?scores <team> (SEA, JAX, LAC, etc) \n```"
+    await ctx.send(
+        str
     )
 
 client.run(TOKEN)
