@@ -11,7 +11,7 @@ import time
 from bs4 import BeautifulSoup
 
 # Credentials
-TOKEN = '<TOKEN>'
+TOKEN = 'TOKEN'
 
 # Create bot
 client = commands.Bot(command_prefix='?')
@@ -20,7 +20,7 @@ def get_scores():
     while(True):
         global scoreRequest
         scoreRequest = requests.get("http://static.nfl.com/liveupdate/scorestrip/scorestrip.json")
-        time.sleep(60)
+        time.sleep(15)
 
 def get_html():
     while(True):
@@ -80,8 +80,7 @@ def get_html():
                 js[nfcs].append({"team":tn.text, "wins":w.text, "losses":l.text, "ties":t.text})
             if tn != None and (tn.text == "San Francisco 49ers" or tn.text == "Arizona Cardinals" or tn.text == "Seattle Seahawks" or tn.text == "Los Angeles Rams"):
                 js[nfcw].append({"team":tn.text, "wins":w.text, "losses":l.text, "ties":t.text})
-        print("done")
-        time.sleep(3600)
+        time.sleep(43200)
 
 class game:
     def __init__(self, day, home, homeScore, away, awayScore, status, timeInQuarter, gameTime):
@@ -562,9 +561,36 @@ async def scores(ctx, *args):
 
 @client.command()
 async def NFLBotHelp(ctx):
-    str = "```\n Commands: ?standings | ?standings <conference:division> (afce, nfce, etc) | ?scores | ?scores <team> (SEA, JAX, LAC, etc) \n```"
+    str = "```\n Commands: ?standings | ?standings <conference:division> (afce, nfce, etc) | ?scores | ?scores <team> (SEA, JAX, LAC, etc) | ?fbref <firstName> <lastName>\n```"
     await ctx.send(
         str
+    )
+
+@client.command()
+async def fbref(ctx, *args):
+    if len(args) == 0:
+        await ctx.send(
+            "```\n" + "Enter a player" + "\n```"
+        )
+        return
+    i = 0
+    urlStr = "https://www.pro-football-reference.com/search/search.fcgi?search="
+
+    if args[0].lower() == "asian" and args[1].lower() == "jesus":
+        urlStr = "https://www.pro-football-reference.com/players/D/DaltAn00.htm"
+        await ctx.send(
+            urlStr
+        )
+        return
+
+    while i < len(args):
+        if(i == 0):
+            urlStr = urlStr + args[0]
+        else:
+            urlStr = urlStr + "+" + args[i]
+        i += 1
+    await ctx.send(
+        urlStr
     )
 
 client.run(TOKEN)
