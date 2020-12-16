@@ -11,17 +11,17 @@ import time
 from bs4 import BeautifulSoup
 
 # Credentials
-TOKEN = 'TOKEN'
+TOKEN = 'token'
 
 # Create bot
 client = commands.Bot(command_prefix='?')
-
+#######################################################################################SCORE REQUEST THREAD
 def get_scores():
     while(True):
         global scoreRequest
         scoreRequest = requests.get("http://static.nfl.com/liveupdate/scorestrip/scorestrip.json")
-        time.sleep(15)
-
+        time.sleep(43200)
+#######################################################################################STANDINGS REQUEST THREAD
 def get_html():
     while(True):
         headers = {'User-Agent' : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36'}
@@ -82,16 +82,7 @@ def get_html():
                 js[nfcw].append({"team":tn.text, "wins":w.text, "losses":l.text, "ties":t.text})
         time.sleep(43200)
 
-class game:
-    def __init__(self, day, home, homeScore, away, awayScore, status, timeInQuarter, gameTime):
-        self.day = day
-        self.home = home
-        self.homeScore = homeScore
-        self.away = away
-        self.awayScore = awayScore
-        self.status = status
-        self.timeInQuarter = timeInQuarter
-        self.gameTime = gameTime
+#######################################################################################INITIALIZE
 
 @client.event
 async def on_ready():
@@ -102,8 +93,7 @@ async def on_ready():
     req.start()
     req2.start()
 
-# Command
-
+#######################################################################################STANDINGS
 @client.command()
 async def standings(ctx, *args):
     stStr = "```\n"
@@ -241,8 +231,17 @@ async def standings(ctx, *args):
     await ctx.send(
         stStr
     )
-
-
+class game:
+    def __init__(self, day, home, homeScore, away, awayScore, status, timeInQuarter, gameTime):
+        self.day = day
+        self.home = home
+        self.homeScore = homeScore
+        self.away = away
+        self.awayScore = awayScore
+        self.status = status
+        self.timeInQuarter = timeInQuarter
+        self.gameTime = gameTime
+##########################################################################SCORES
 @client.command()
 async def scores(ctx, *args):
     str = scoreRequest.text
@@ -558,14 +557,14 @@ async def scores(ctx, *args):
     await ctx.send(
         gmStr
     )
-
+#######################################################################################HELP COMMAND
 @client.command()
 async def NFLBotHelp(ctx):
     str = "```\n Commands: ?standings | ?standings <conference:division> (afce, nfce, etc) | ?scores | ?scores <team> (SEA, JAX, LAC, etc) | ?fbref <firstName> <lastName>\n```"
     await ctx.send(
         str
     )
-
+#######################################################################################FBREF LINKER
 @client.command()
 async def fbref(ctx, *args):
     if len(args) == 0:
@@ -592,5 +591,99 @@ async def fbref(ctx, *args):
     await ctx.send(
         urlStr
     )
+#######################################################################################QUARTERBACK STATS
+class quarterback:
+    def __init__(self, name, team, age, cmp, att, cmpPctg, yards, tds, ints, rtg, sacks):
+        self.name = name
+        self.team = team
+        self.age = age
+        self.cmp = cmp
+        self.att = att
+        self.cmpPctg = cmpPctg
+        self.yards = yards
+        self.tds = tds
+        self.ints = ints
+        self.rtg = rtg
+        self.sacks = sacks
+
+@client.command()
+async def leaders(ctx, *args):
+    argLen = len(args)
+    if argLen == 0:
+        reaction = "❓"
+        await ctx.message.add_reaction(emoji=reaction)
+        return
+
+    request = requests.get("https://www.pro-football-reference.com/years/2020/passing.htm#passing::pass_td")
+    soup = BeautifulSoup(request.content, 'html.parser')
+    stats = soup.find_all(attrs={"data-stat":True})
+    statLen = len(stats)
+    i = 32
+    j = 0
+    quarterbacks = []
+    strs = ""
+    for stat in stats:
+        if j == 50:
+            break
+        if stats[i].text.lower() == "player":
+            pass
+        else:
+            quarterbacks.append(quarterback(stats[i].text, stats[i+1].text, stats[i+2].text, stats[i+7].text, stats[i+8].text, stats[i+9].text, stats[i+10].text, stats[i+11].text, stats[i+13].text, stats[i+21].text, stats[i+23].text))
+            j += 1
+        i += 31
+    str = "```\n"
+    i = 0
+    if args[0].lower() == "touchdowns" or args[0].lower() == "tds":
+        quarterbacks_sorted = sorted(quarterbacks, key = lambda x: int(x.tds), reverse=True)
+        str = str + '{:20}{:3}\n'.format("NAME", "TD")
+        while i < 10:
+            str = str + '{:20}{:3}\n'.format(quarterbacks_sorted[i].name, quarterbacks_sorted[i].tds)
+            i += 1
+    elif args[0].lower() == "interceptions" or args[0].lower() == "ints":
+        quarterbacks_sorted = sorted(quarterbacks, key = lambda x: int(x.ints), reverse=True)
+        str = str + '{:20}{:4}\n'.format("NAME", "INT")
+        while i < 10:
+            str = str + '{:20}{:4}\n'.format(quarterbacks_sorted[i].name, quarterbacks_sorted[i].ints)
+            i += 1
+    elif args[0].lower() == "yards" or args[0].lower() == "yds":
+        quarterbacks_sorted = sorted(quarterbacks, key = lambda x: int(x.yards), reverse=True)
+        str = str + '{:20}{:4}\n'.format("NAME", "YDS")
+        while i < 10:
+            str = str + '{:20}{:4}\n'.format(quarterbacks_sorted[i].name, quarterbacks_sorted[i].yards)
+            i += 1
+    elif args[0].lower() == "ratings" or args[0].lower() == "rtgs":
+        quarterbacks_sorted = sorted(quarterbacks, key = lambda x: float(x.rtg), reverse=True)
+        str = str + '{:20}{:4}\n'.format("NAME", "RTG")
+        while i < 10:
+            str = str + '{:20}{:4}\n'.format(quarterbacks_sorted[i].name, quarterbacks_sorted[i].rtg)
+            i += 1
+    elif args[0].lower() == "completion":
+        quarterbacks_sorted = sorted(quarterbacks, key = lambda x: float(x.cmpPctg), reverse=True)
+        while i < 10:
+            str = str + '{:20}{:4}\n'.format(quarterbacks_sorted[i].name, quarterbacks_sorted[i].cmpPctg)
+            i += 1
+    elif args[0].lower() == "sacks":
+        str = str + '{:20}{:5}\n'.format("NAME", "SACKS")
+        quarterbacks_sorted = sorted(quarterbacks, key = lambda x: float(x.sacks), reverse=True)
+        while i < 10:
+            str = str + '{:20}{:4}\n'.format(quarterbacks_sorted[i].name, quarterbacks_sorted[i].sacks)
+            i += 1
+    else:
+        reaction = "❓"
+        await ctx.message.add_reaction(emoji=reaction)
+        return
+
+    str = str + "\n```"
+
+    await ctx.send(
+        str
+    )
+#######################################################################################INVALID COMMAND
+@client.event
+async def on_command_error(ctx, error):
+    reaction = "❓"
+    await ctx.message.add_reaction(emoji=reaction)
+    return
+
 
 client.run(TOKEN)
