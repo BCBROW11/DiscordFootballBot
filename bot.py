@@ -3,7 +3,6 @@ import requests
 import json
 import yaml
 from discord.ext import commands
-from prettytable import PrettyTable
 import http.client
 import logging
 import threading
@@ -20,86 +19,99 @@ def get_scores():
     while(True):
         global scoreRequest
         scoreRequest = requests.get("http://static.nfl.com/liveupdate/scorestrip/scorestrip.json")
+        print("scores update done")
         time.sleep(43200)
 #######################################################################################STANDINGS REQUEST THREAD
-def get_html():
+def get_standings():
     while(True):
         headers = {'User-Agent' : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36'}
         request = requests.get("https://www.pro-football-reference.com/years/2020/", headers = headers)
-        global soup
-        soup = BeautifulSoup(request.content, 'html.parser')
-        global js
-        js = {}
-        global afce
-        global afcw
-        global afcn
-        global afcs
-        global nfce
-        global nfcw
-        global nfcn
-        global nfcs
-
-        afce = "AFC East"
-        afcw = "AFC West"
-        afcn = "AFC North"
-        afcs = "AFC South"
-        nfce = "NFC East"
-        nfcw = "NFC West"
-        nfcn = "NFC North"
-        nfcs = "NFC South"
-        js[afce] = []
-        js[afcw] = []
-        js[afcn] = []
-        js[afcs] = []
-        js[nfce] = []
-        js[nfcw] = []
-        js[nfcn] = []
-        js[nfcs] = []
-
-        for s in soup.find_all('tr'):
-            tn = s.find(attrs={'data-stat': 'team'})
-            w = s.find(attrs={'data-stat': 'wins'})
-            l = s.find(attrs={'data-stat': 'losses'})
-            t = s.find(attrs={'data-stat': 'ties'})
-            #AFC Teams
-            if tn != None and (tn.text == "Buffalo Bills" or tn.text == "Miami Dolphins" or tn.text == "New England Patriots" or tn.text == "New York Jets"):
-                js[afce].append({"team":tn.text, "wins":w.text, "losses":l.text, "ties":t.text})
-            if tn != None and (tn.text == "Pittsburgh Steelers" or tn.text == "Cleveland Browns" or tn.text == "Baltimore Ravens" or tn.text == "Cincinnati Bengals"):
-                js[afcn].append({"team":tn.text, "wins":w.text, "losses":l.text, "ties":t.text})
-            if tn != None and (tn.text == "Indianapolis Colts" or tn.text == "Tennessee Titans" or tn.text == "Houston Texans" or tn.text == "Jacksonville Jaguars"):
-                js[afcs].append({"team":tn.text, "wins":w.text, "losses":l.text, "ties":t.text})
-            if tn != None and (tn.text == "Kansas City Chiefs" or tn.text == "Las Vegas Raiders" or tn.text == "Denver Broncos" or tn.text == "Los Angeles Chargers"):
-                js[afcw].append({"team":tn.text, "wins":w.text, "losses":l.text, "ties":t.text})
-
-            #NFC Teams
-            if tn != None and (tn.text == "Washington Football Team" or tn.text == "Dallas Cowboys" or tn.text == "New York Giants" or tn.text == "Philadelphia Eagles"):
-                js[nfce].append({"team":tn.text, "wins":w.text, "losses":l.text, "ties":t.text})
-            if tn != None and (tn.text == "Green Bay Packers" or tn.text == "Minnesota Vikings" or tn.text == "Detroit Lions" or tn.text == "Chicago Bears"):
-                js[nfcn].append({"team":tn.text, "wins":w.text, "losses":l.text, "ties":t.text})
-            if tn != None and (tn.text == "Tampa Bay Buccaneers" or tn.text == "New Orleans Saints" or tn.text == "Atlanta Falcons" or tn.text == "Carolina Panthers"):
-                js[nfcs].append({"team":tn.text, "wins":w.text, "losses":l.text, "ties":t.text})
-            if tn != None and (tn.text == "San Francisco 49ers" or tn.text == "Arizona Cardinals" or tn.text == "Seattle Seahawks" or tn.text == "Los Angeles Rams"):
-                js[nfcw].append({"team":tn.text, "wins":w.text, "losses":l.text, "ties":t.text})
+        global standingsSoup
+        standingsSoup = BeautifulSoup(request.content, 'html.parser')
+        print("standings update done")
+        time.sleep(43200)
+#######################################################################################QB STATS REQUEST THREAD
+def get_qb():
+    while(True):
+        request = requests.get("https://www.pro-football-reference.com/years/2020/passing.htm#passing::pass_td")
+        global qb_soup
+        qb_soup = BeautifulSoup(request.content, 'html.parser')
+        print("quarterback update done")
+        time.sleep(43200)
+#######################################################################################QB STATS REQUEST THREAD
+def get_rb():
+    while(True):
+        request = requests.get("https://www.pro-football-reference.com/years/2020/rushing.htm#rushing_and_receiving::rush_yds_per_g")
+        global rb_soup
+        rb_soup = BeautifulSoup(request.content, 'html.parser')
+        print("runningback update done")
         time.sleep(43200)
 
 #######################################################################################INITIALIZE
-
 @client.event
 async def on_ready():
     print('Connected to bot: {}'.format(client.user.name))
     print('Bot ID: {}'.format(client.user.id))
-    req = threading.Thread(target=get_html)
+    req = threading.Thread(target=get_standings)
     req2 = threading.Thread(target=get_scores)
+    req3 = threading.Thread(target=get_qb)
+    req4 = threading.Thread(target=get_rb)
     req.start()
     req2.start()
+    req3.start()
+    req4.start()
 
 #######################################################################################STANDINGS
 @client.command()
 async def standings(ctx, *args):
+    js = {}
+    afce = "AFC East"
+    afcw = "AFC West"
+    afcn = "AFC North"
+    afcs = "AFC South"
+    nfce = "NFC East"
+    nfcw = "NFC West"
+    nfcn = "NFC North"
+    nfcs = "NFC South"
+    js[afce] = []
+    js[afcw] = []
+    js[afcn] = []
+    js[afcs] = []
+    js[nfce] = []
+    js[nfcw] = []
+    js[nfcn] = []
+    js[nfcs] = []
+
+    for s in standingsSoup.find_all('tr'):
+        tn = s.find(attrs={'data-stat': 'team'})
+        w = s.find(attrs={'data-stat': 'wins'})
+        l = s.find(attrs={'data-stat': 'losses'})
+        t = s.find(attrs={'data-stat': 'ties'})
+        #AFC Teams
+        if tn != None and (tn.text == "Buffalo Bills" or tn.text == "Miami Dolphins" or tn.text == "New England Patriots" or tn.text == "New York Jets"):
+            js[afce].append({"team":tn.text, "wins":w.text, "losses":l.text, "ties":t.text})
+        if tn != None and (tn.text == "Pittsburgh Steelers" or tn.text == "Cleveland Browns" or tn.text == "Baltimore Ravens" or tn.text == "Cincinnati Bengals"):
+            js[afcn].append({"team":tn.text, "wins":w.text, "losses":l.text, "ties":t.text})
+        if tn != None and (tn.text == "Indianapolis Colts" or tn.text == "Tennessee Titans" or tn.text == "Houston Texans" or tn.text == "Jacksonville Jaguars"):
+            js[afcs].append({"team":tn.text, "wins":w.text, "losses":l.text, "ties":t.text})
+        if tn != None and (tn.text == "Kansas City Chiefs" or tn.text == "Las Vegas Raiders" or tn.text == "Denver Broncos" or tn.text == "Los Angeles Chargers"):
+            js[afcw].append({"team":tn.text, "wins":w.text, "losses":l.text, "ties":t.text})
+        #NFC Teams
+        if tn != None and (tn.text == "Washington Football Team" or tn.text == "Dallas Cowboys" or tn.text == "New York Giants" or tn.text == "Philadelphia Eagles"):
+            js[nfce].append({"team":tn.text, "wins":w.text, "losses":l.text, "ties":t.text})
+        if tn != None and (tn.text == "Green Bay Packers" or tn.text == "Minnesota Vikings" or tn.text == "Detroit Lions" or tn.text == "Chicago Bears"):
+            js[nfcn].append({"team":tn.text, "wins":w.text, "losses":l.text, "ties":t.text})
+        if tn != None and (tn.text == "Tampa Bay Buccaneers" or tn.text == "New Orleans Saints" or tn.text == "Atlanta Falcons" or tn.text == "Carolina Panthers"):
+            js[nfcs].append({"team":tn.text, "wins":w.text, "losses":l.text, "ties":t.text})
+        if tn != None and (tn.text == "San Francisco 49ers" or tn.text == "Arizona Cardinals" or tn.text == "Seattle Seahawks" or tn.text == "Los Angeles Rams"):
+            js[nfcw].append({"team":tn.text, "wins":w.text, "losses":l.text, "ties":t.text})
+
+
     stStr = "```\n"
 
     if args:
-        if args[0].lower() == "nfcw":
+        div = args[0].lower() + " " + args[1].lower()
+        if div == "nfc west" or div == "nfc w":
             stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(nfcw, "W", "L", "T")
             stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[nfcw][0]["team"], js[nfcw][0]["wins"], js[nfcw][0]["losses"], js[nfcw][0]["ties"])
             stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[nfcw][1]["team"], js[nfcw][1]["wins"], js[nfcw][1]["losses"], js[nfcw][1]["ties"])
@@ -110,7 +122,7 @@ async def standings(ctx, *args):
                 stStr
             )
             return
-        elif args[0].lower() == "nfce":
+        if div == "nfc east" or div == "nfc e":
             stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(nfce, "W", "L", "T")
             stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[nfce][0]["team"], js[nfce][0]["wins"], js[nfce][0]["losses"], js[nfce][0]["ties"])
             stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[nfce][1]["team"], js[nfce][1]["wins"], js[nfce][1]["losses"], js[nfce][1]["ties"])
@@ -121,7 +133,7 @@ async def standings(ctx, *args):
                 stStr
             )
             return
-        elif args[0].lower() == "nfcs":
+        if div == "nfc south" or div == "nfc s":
             stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(nfcs, "W", "L", "T")
             stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[nfcs][0]["team"], js[nfcs][0]["wins"], js[nfcs][0]["losses"], js[nfcs][0]["ties"])
             stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[nfcs][1]["team"], js[nfcs][1]["wins"], js[nfcs][1]["losses"], js[nfcs][1]["ties"])
@@ -132,7 +144,7 @@ async def standings(ctx, *args):
                 stStr
             )
             return
-        elif args[0].lower() == "nfcn":
+        if div == "nfc north" or div == "nfc n":
             stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(nfcn, "W", "L", "T")
             stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[nfcn][0]["team"], js[nfcn][0]["wins"], js[nfcn][0]["losses"], js[nfcn][0]["ties"])
             stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[nfcn][1]["team"], js[nfcn][1]["wins"], js[nfcn][1]["losses"], js[nfcn][1]["ties"])
@@ -143,7 +155,7 @@ async def standings(ctx, *args):
                 stStr
             )
             return
-        elif args[0].lower() == "afcw":
+        if div == "afc west" or div == "afc w":
             stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(afcw, "W", "L", "T")
             stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[afcw][0]["team"], js[afcw][0]["wins"], js[afcw][0]["losses"], js[afcw][0]["ties"])
             stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[afcw][1]["team"], js[afcw][1]["wins"], js[afcw][1]["losses"], js[afcw][1]["ties"])
@@ -154,7 +166,7 @@ async def standings(ctx, *args):
                 stStr
             )
             return
-        elif args[0].lower() == "afce":
+        if div == "afc east" or div == "afc e":
             stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(afce, "W", "L", "T")
             stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[afce][0]["team"], js[afce][0]["wins"], js[afce][0]["losses"], js[afce][0]["ties"])
             stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[afce][1]["team"], js[afce][1]["wins"], js[afce][1]["losses"], js[afce][1]["ties"])
@@ -165,7 +177,7 @@ async def standings(ctx, *args):
                 stStr
             )
             return
-        elif args[0].lower() == "afcs":
+        if div == "afc south" or div == "afc s":
             stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(afcs, "W", "L", "T")
             stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[afcs][0]["team"], js[afcs][0]["wins"], js[afcs][0]["losses"], js[afcs][0]["ties"])
             stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[afcs][1]["team"], js[afcs][1]["wins"], js[afcs][1]["losses"], js[afcs][1]["ties"])
@@ -176,7 +188,7 @@ async def standings(ctx, *args):
                 stStr
             )
             return
-        elif args[0].lower() == "afcn":
+        if div == "afc north" or div == "afc n":
             stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(afcn, "W", "L", "T")
             stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[afcn][0]["team"], js[afcn][0]["wins"], js[afcn][0]["losses"], js[afcn][0]["ties"])
             stStr = stStr + '{:25}{:4}{:4}{:4}\n'.format(js[afcn][1]["team"], js[afcn][1]["wins"], js[afcn][1]["losses"], js[afcn][1]["ties"])
@@ -248,7 +260,6 @@ async def scores(ctx, *args):
     str = str.replace(",,", ",\"\",")
     str = str.replace(",,", ",\"\",")
     y = json.loads(str)
-
 
     scores = []
 
@@ -607,16 +618,13 @@ class quarterback:
         self.sacks = sacks
 
 @client.command()
-async def leaders(ctx, *args):
+async def qb(ctx, *args):
     argLen = len(args)
     if argLen == 0:
         reaction = "❓"
         await ctx.message.add_reaction(emoji=reaction)
         return
-
-    request = requests.get("https://www.pro-football-reference.com/years/2020/passing.htm#passing::pass_td")
-    soup = BeautifulSoup(request.content, 'html.parser')
-    stats = soup.find_all(attrs={"data-stat":True})
+    stats = qb_soup.find_all(attrs={"data-stat":True})
     statLen = len(stats)
     i = 32
     j = 0
@@ -633,57 +641,225 @@ async def leaders(ctx, *args):
         i += 31
     str = "```\n"
     i = 0
-    if args[0].lower() == "touchdowns" or args[0].lower() == "tds":
-        quarterbacks_sorted = sorted(quarterbacks, key = lambda x: int(x.tds), reverse=True)
-        str = str + '{:20}{:3}\n'.format("NAME", "TD")
-        while i < 10:
-            str = str + '{:20}{:3}\n'.format(quarterbacks_sorted[i].name, quarterbacks_sorted[i].tds)
-            i += 1
-    elif args[0].lower() == "interceptions" or args[0].lower() == "ints":
-        quarterbacks_sorted = sorted(quarterbacks, key = lambda x: int(x.ints), reverse=True)
-        str = str + '{:20}{:4}\n'.format("NAME", "INT")
-        while i < 10:
-            str = str + '{:20}{:4}\n'.format(quarterbacks_sorted[i].name, quarterbacks_sorted[i].ints)
-            i += 1
-    elif args[0].lower() == "yards" or args[0].lower() == "yds":
-        quarterbacks_sorted = sorted(quarterbacks, key = lambda x: int(x.yards), reverse=True)
-        str = str + '{:20}{:4}\n'.format("NAME", "YDS")
-        while i < 10:
-            str = str + '{:20}{:4}\n'.format(quarterbacks_sorted[i].name, quarterbacks_sorted[i].yards)
-            i += 1
-    elif args[0].lower() == "ratings" or args[0].lower() == "rtgs":
-        quarterbacks_sorted = sorted(quarterbacks, key = lambda x: float(x.rtg), reverse=True)
-        str = str + '{:20}{:4}\n'.format("NAME", "RTG")
-        while i < 10:
-            str = str + '{:20}{:4}\n'.format(quarterbacks_sorted[i].name, quarterbacks_sorted[i].rtg)
-            i += 1
-    elif args[0].lower() == "completion":
-        quarterbacks_sorted = sorted(quarterbacks, key = lambda x: float(x.cmpPctg), reverse=True)
-        while i < 10:
-            str = str + '{:20}{:4}\n'.format(quarterbacks_sorted[i].name, quarterbacks_sorted[i].cmpPctg)
-            i += 1
-    elif args[0].lower() == "sacks":
-        str = str + '{:20}{:5}\n'.format("NAME", "SACKS")
-        quarterbacks_sorted = sorted(quarterbacks, key = lambda x: float(x.sacks), reverse=True)
-        while i < 10:
-            str = str + '{:20}{:4}\n'.format(quarterbacks_sorted[i].name, quarterbacks_sorted[i].sacks)
-            i += 1
-    else:
+
+    if len(args) == 1:
+        if args[0].lower() == "touchdowns" or args[0].lower() == "tds":
+            quarterbacks_sorted = sorted(quarterbacks, key = lambda x: int(x.tds), reverse=True)
+            str = str + '{:20}{:3}\n'.format("NAME", "TD")
+            while i < 10:
+                str = str + '{:20}{:3}\n'.format(quarterbacks_sorted[i].name, quarterbacks_sorted[i].tds)
+                i += 1
+        elif args[0].lower() == "interceptions" or args[0].lower() == "ints":
+            quarterbacks_sorted = sorted(quarterbacks, key = lambda x: int(x.ints), reverse=True)
+            str = str + '{:20}{:4}\n'.format("NAME", "INT")
+            while i < 10:
+                str = str + '{:20}{:4}\n'.format(quarterbacks_sorted[i].name, quarterbacks_sorted[i].ints)
+                i += 1
+        elif args[0].lower() == "yards" or args[0].lower() == "yds":
+            quarterbacks_sorted = sorted(quarterbacks, key = lambda x: int(x.yards), reverse=True)
+            str = str + '{:20}{:4}\n'.format("NAME", "YDS")
+            while i < 10:
+                str = str + '{:20}{:4}\n'.format(quarterbacks_sorted[i].name, quarterbacks_sorted[i].yards)
+                i += 1
+        elif args[0].lower() == "ratings" or args[0].lower() == "rtgs":
+            quarterbacks_sorted = sorted(quarterbacks, key = lambda x: float(x.rtg), reverse=True)
+            str = str + '{:20}{:4}\n'.format("NAME", "RTG")
+            while i < 10:
+                str = str + '{:20}{:4}\n'.format(quarterbacks_sorted[i].name, quarterbacks_sorted[i].rtg)
+                i += 1
+        elif args[0].lower() == "completion":
+            quarterbacks_sorted = sorted(quarterbacks, key = lambda x: float(x.cmpPctg), reverse=True)
+            while i < 10:
+                str = str + '{:20}{:4}\n'.format(quarterbacks_sorted[i].name, quarterbacks_sorted[i].cmpPctg)
+                i += 1
+        elif args[0].lower() == "sacks":
+            str = str + '{:20}{:5}\n'.format("NAME", "SACKS")
+            quarterbacks_sorted = sorted(quarterbacks, key = lambda x: float(x.sacks), reverse=True)
+            while i < 10:
+                str = str + '{:20}{:4}\n'.format(quarterbacks_sorted[i].name, quarterbacks_sorted[i].sacks)
+                i += 1
+        else:
+            reaction = "❓"
+            await ctx.message.add_reaction(emoji=reaction)
+            return
+    if len(args) == 2:
+        qb_count = 0
+        qb_name = args[0].lower() + " " + args[1].lower()
+        while qb_count < len(quarterbacks):
+            qb_name2 = quarterbacks[qb_count].name.split(" ")
+            if qb_name == (qb_name2[0].lower() + " " + qb_name2[1].lower()):
+                str = str + '{:20}{:4}{:4}{:5}{:3}{:4}{:6}{:3}\n'.format("NAME", "CMP", "ATT", "YDS", "TD", "INT", "RTG", "SCK")
+                str = str + '{:20}{:4}{:4}{:5}{:3}{:4}{:6}{:3}\n'.format(quarterbacks[qb_count].name, quarterbacks[qb_count].cmp, quarterbacks[qb_count].att, quarterbacks[qb_count].yards, quarterbacks[qb_count].tds, quarterbacks[qb_count].ints, quarterbacks[qb_count].rtg, quarterbacks[qb_count].sacks)
+                break
+            qb_count += 1
+    if len(args) > 2:
+        str = str + '{:20}{:4}{:4}{:5}{:3}{:4}{:6}{:3}\n'.format("NAME", "CMP", "ATT", "YDS", "TD", "INT", "RTG", "SCK")
+        if args[0].lower() == "compare":
+            qb_comps = []
+            qb_count = 0
+            i = 1
+            j = 2
+            argLen = len(args)
+            #add qbs to compare
+            while i < argLen - 1:
+                qb_comps.append(args[i] + " " + args[j])
+                i += 2
+                j += 2
+            #0 less than 50
+            while qb_count < len(quarterbacks):
+                k = 0
+                qb_name2 = quarterbacks[qb_count].name.split(" ") #qb name from qb list
+                while k < len(qb_comps):
+                    if qb_comps[k].lower() == (qb_name2[0].lower() + " " + qb_name2[1].lower()):
+                        str = str + '{:20}{:4}{:4}{:5}{:3}{:4}{:6}{:3}\n'.format(quarterbacks[qb_count].name, quarterbacks[qb_count].cmp, quarterbacks[qb_count].att, quarterbacks[qb_count].yards, quarterbacks[qb_count].tds, quarterbacks[qb_count].ints, quarterbacks[qb_count].rtg, quarterbacks[qb_count].sacks)
+                    k+=1
+                qb_count += 1
+
+    str = str + "\n```"
+    if str == "```\n\n```":
         reaction = "❓"
         await ctx.message.add_reaction(emoji=reaction)
         return
 
+    await ctx.send(
+        str
+    )
+#######################################################################################RUNNINGBACK STATS
+class runningback:
+    def __init__(self, name, team, age, att, yards, tds, long, ya, yg, fmb):
+        self.name = name
+        self.team = team
+        self.age = age
+        self.att = att
+        self.yards = yards
+        self.tds = tds
+        self.long = long
+        self.ya = ya
+        self.yg = yg
+        self.fmb = fmb
+@client.command()
+async def rb(ctx, *args):
+    argLen = len(args)
+    if argLen == 0:
+        reaction = "❓"
+        await ctx.message.add_reaction(emoji=reaction)
+        return
+    stats = rb_soup.find_all(attrs={"data-stat":True})
+    statLen = len(stats)
+    i = 19
+    j = 0
+    runningbacks = []
+    strs = ""
+    for stat in stats:
+        if j == 100:
+            break
+        if stats[i].text.lower() == "player":
+            i += 15
+            j += 1
+        else:
+            if stats[i+3].text.lower() != "rb":
+                j += 1
+                pass
+            else:
+                runningbacks.append(runningback(stats[i].text, stats[i+1].text, stats[i+2].text, stats[i+6].text, stats[i+7].text, stats[i+8].text, stats[i+10].text, stats[i+11].text, stats[i+12].text, stats[i+13].text))
+                j += 1
+            i += 15
+    str = "```\n"
+    i = 0
+    if len(args) == 1:
+        if args[0].lower() == "touchdowns" or args[0].lower() == "tds":
+            runningbacks_sorted = sorted(runningbacks, key = lambda x: int(x.tds), reverse=True)
+            str = str + '{:20}{:3}\n'.format("NAME", "TD")
+            while i < 10:
+                str = str + '{:20}{:3}\n'.format(runningbacks_sorted[i].name, runningbacks_sorted[i].tds)
+                i += 1
+        elif args[0].lower() == "yards" or args[0].lower() == "yds":
+            runningbacks_sorted = sorted(runningbacks, key = lambda x: int(x.yards), reverse=True)
+            str = str + '{:20}{:4}\n'.format("NAME", "YDS")
+            while i < 10:
+                str = str + '{:20}{:4}\n'.format(runningbacks_sorted[i].name, runningbacks_sorted[i].yards)
+                i += 1
+        elif args[0].lower() == "long" or args[0].lower() == "lng":
+            runningbacks_sorted = sorted(runningbacks, key = lambda x: int(x.long), reverse=True)
+            str = str + '{:20}{:4}\n'.format("NAME", "LNG")
+            while i < 10:
+                str = str + '{:20}{:4}\n'.format(runningbacks_sorted[i].name, runningbacks_sorted[i].long)
+                i += 1
+        elif args[0].lower() == "y/a":
+            str = str + '{:20}{:5}\n'.format("NAME", "Y/A")
+            runningbacks_sorted = sorted(runningbacks, key = lambda x: float(x.ya), reverse=True)
+            while i < 10:
+                str = str + '{:20}{:4}\n'.format(runningbacks_sorted[i].name, runningbacks_sorted[i].ya)
+                i += 1
+        elif args[0].lower() == "y/g":
+            str = str + '{:20}{:5}\n'.format("NAME", "Y/G")
+            runningbacks_sorted = sorted(runningbacks, key = lambda x: float(x.yg), reverse=True)
+            while i < 10:
+                str = str + '{:20}{:4}\n'.format(runningbacks_sorted[i].name, runningbacks_sorted[i].yg)
+                i += 1
+        elif args[0].lower() == "fumbles" or args[0].lower() == "fmb":
+            str = str + '{:20}{:5}\n'.format("NAME", "FMB")
+            runningbacks_sorted = sorted(runningbacks, key = lambda x: float(x.fmb), reverse=True)
+            while i < 10:
+                str = str + '{:20}{:4}\n'.format(runningbacks_sorted[i].name, runningbacks_sorted[i].fmb)
+                i += 1
+        else:
+            reaction = "❓"
+            await ctx.message.add_reaction(emoji=reaction)
+            return
+    if len(args) == 2:
+        rb_count = 0
+        rb_name = args[0].lower() + " " + args[1].lower()
+        while rb_count < len(runningbacks):
+            rb_name2 = runningbacks[rb_count].name.split(" ")
+            if rb_name == (rb_name2[0].lower() + " " + rb_name2[1].lower()):
+                str = str + '{:20}{:4}{:5}{:3}{:4}{:4}{:6}{:3}\n'.format("NAME", "ATT", "YDS", "TD", "LNG", "Y/A", "Y/G", "FUM")
+                str = str + '{:20}{:4}{:5}{:3}{:4}{:4}{:6}{:3}\n'.format(runningbacks[rb_count].name, runningbacks[rb_count].att, runningbacks[rb_count].yards, runningbacks[rb_count].tds, runningbacks[rb_count].long, runningbacks[rb_count].ya, runningbacks[rb_count].yg, runningbacks[rb_count].fmb)
+                break
+            rb_count += 1
+    if len(args) > 2:
+        str = str + '{:20}{:4}{:5}{:3}{:4}{:4}{:6}{:3}\n'.format("NAME", "ATT", "YDS", "TD", "LNG", "Y/A", "Y/G", "FUM")
+        if args[0].lower() == "compare":
+            rb_comps = []
+            rb_count = 0
+            i = 1
+            j = 2
+            argLen = len(args)
+            #add qbs to compare
+            while i < argLen - 1:
+                rb_comps.append(args[i] + " " + args[j])
+                i += 2
+                j += 2
+            #0 less than 50
+            if len(rb_comps) == 0:
+                reaction = "❓" #make this global
+                await ctx.message.add_reaction(emoji=reaction)
+                return
+            while rb_count < len(runningbacks):
+                k = 0
+                rb_name2 = runningbacks[rb_count].name.split(" ")
+                while k < len(rb_comps):
+                    if rb_comps[k].lower() == (rb_name2[0].lower() + " " + rb_name2[1].lower()):
+                        str = str + '{:20}{:4}{:5}{:3}{:4}{:4}{:6}{:3}\n'.format(runningbacks[rb_count].name, runningbacks[rb_count].att, runningbacks[rb_count].yards, runningbacks[rb_count].tds, runningbacks[rb_count].long, runningbacks[rb_count].ya, runningbacks[rb_count].yg, runningbacks[rb_count].fmb)
+                    k+=1
+                rb_count += 1
+        else:
+            str = "```\n"
     str = str + "\n```"
+    if str == "```\n\n```":
+        reaction = "❓"
+        await ctx.message.add_reaction(emoji=reaction)
+        return
 
     await ctx.send(
         str
     )
+
 #######################################################################################INVALID COMMAND
 @client.event
 async def on_command_error(ctx, error):
     reaction = "❓"
     await ctx.message.add_reaction(emoji=reaction)
     return
-
 
 client.run(TOKEN)
