@@ -7,6 +7,9 @@ import http.client
 import logging
 import threading
 import time
+from quarterback import quarterback
+from runningback import runningback
+from receiver import receiver
 from bs4 import BeautifulSoup
 
 # Credentials
@@ -19,7 +22,6 @@ def get_scores():
     while(True):
         global scoreRequest
         scoreRequest = requests.get("http://static.nfl.com/liveupdate/scorestrip/scorestrip.json")
-        print("scores update done")
         time.sleep(43200)
 #######################################################################################STANDINGS REQUEST THREAD
 def get_standings():
@@ -30,36 +32,45 @@ def get_standings():
         standingsSoup = BeautifulSoup(request.content, 'html.parser')
         print("standings update done")
         time.sleep(43200)
-#######################################################################################QB STATS REQUEST THREAD
-def get_qb():
+#######################################################################################STATS REQUEST THREAD
+def get_stats():
     while(True):
         request = requests.get("https://www.pro-football-reference.com/years/2020/passing.htm#passing::pass_td")
-        global qb_soup
         qb_soup = BeautifulSoup(request.content, 'html.parser')
-        print("quarterback update done")
-        time.sleep(43200)
-#######################################################################################QB STATS REQUEST THREAD
-def get_rb():
-    while(True):
+        qb_table_div = qb_soup.find("div", id="div_passing")
+        table = qb_table_div.find("tbody")
+        global qb_rows
+        qb_rows = table.find_all("tr", attrs={"class": None})
+        print("quarterbacks update done")
         request = requests.get("https://www.pro-football-reference.com/years/2020/rushing.htm#rushing_and_receiving::rush_yds_per_g")
-        global rb_soup
         rb_soup = BeautifulSoup(request.content, 'html.parser')
-        print("runningback update done")
+        rb_table_div = rb_soup.find("div", id="div_rushing")
+        table = rb_table_div.find("tbody")
+        global rb_rows
+        rb_rows = table.find_all("tr", attrs={"class": None})
+        print("runningbacks update done")
+        request = requests.get("https://www.pro-football-reference.com/years/2020/receiving.htm#receiving::rec")
+        wr_soup = BeautifulSoup(request.content, 'html.parser')
+        wr_table_div = wr_soup.find("div", id="div_receiving")
+        table = wr_table_div.find("tbody")
+        global wr_rows
+        wr_rows = table.find_all("tr", attrs={"class": None})
+        print("receivers update done")
         time.sleep(43200)
 
 #######################################################################################INITIALIZE
 @client.event
 async def on_ready():
+    global reaction
+    reaction = "❓"
     print('Connected to bot: {}'.format(client.user.name))
     print('Bot ID: {}'.format(client.user.id))
     req = threading.Thread(target=get_standings)
     req2 = threading.Thread(target=get_scores)
-    req3 = threading.Thread(target=get_qb)
-    req4 = threading.Thread(target=get_rb)
+    req3 = threading.Thread(target=get_stats)
     req.start()
     req2.start()
     req3.start()
-    req4.start()
 
 #######################################################################################STANDINGS
 @client.command()
@@ -603,46 +614,21 @@ async def fbref(ctx, *args):
         urlStr
     )
 #######################################################################################QUARTERBACK STATS
-class quarterback:
-    def __init__(self, name, team, age, cmp, att, cmpPctg, yards, tds, ints, rtg, sacks):
-        self.name = name
-        self.team = team
-        self.age = age
-        self.cmp = cmp
-        self.att = att
-        self.cmpPctg = cmpPctg
-        self.yards = yards
-        self.tds = tds
-        self.ints = ints
-        self.rtg = rtg
-        self.sacks = sacks
 
 @client.command()
 async def qb(ctx, *args):
     argLen = len(args)
     if argLen == 0:
-        reaction = "❓"
         await ctx.message.add_reaction(emoji=reaction)
         return
-    stats = qb_soup.find_all(attrs={"data-stat":True})
-    statLen = len(stats)
-    i = 32
-    j = 0
-    quarterbacks = []
-    strs = ""
-    for stat in stats:
-        if j == 50:
-            break
-        if stats[i].text.lower() == "player":
-            pass
-        else:
-            quarterbacks.append(quarterback(stats[i].text, stats[i+1].text, stats[i+2].text, stats[i+7].text, stats[i+8].text, stats[i+9].text, stats[i+10].text, stats[i+11].text, stats[i+13].text, stats[i+21].text, stats[i+23].text))
-            j += 1
-        i += 31
     str = "```\n"
-    i = 0
-
+    quarterbacks = []
+    i = 1
+    for row in qb_rows:
+        stats = row.find_all(attrs={"data-stat":True})
+        quarterbacks.append(quarterback(stats[i].text, stats[i+1].text, stats[i+2].text, stats[i+3].text, stats[i+7].text, stats[i+8].text, stats[i+9].text, stats[i+10].text, stats[i+11].text, stats[i+13].text, stats[i+21].text, stats[i+23].text))
     if len(args) == 1:
+        i = 0
         if args[0].lower() == "touchdowns" or args[0].lower() == "tds":
             quarterbacks_sorted = sorted(quarterbacks, key = lambda x: int(x.tds), reverse=True)
             str = str + '{:20}{:3}\n'.format("NAME", "TD")
@@ -679,7 +665,6 @@ async def qb(ctx, *args):
                 str = str + '{:20}{:4}\n'.format(quarterbacks_sorted[i].name, quarterbacks_sorted[i].sacks)
                 i += 1
         else:
-            reaction = "❓"
             await ctx.message.add_reaction(emoji=reaction)
             return
     if len(args) == 2:
@@ -714,10 +699,8 @@ async def qb(ctx, *args):
                         str = str + '{:20}{:4}{:4}{:5}{:3}{:4}{:6}{:3}\n'.format(quarterbacks[qb_count].name, quarterbacks[qb_count].cmp, quarterbacks[qb_count].att, quarterbacks[qb_count].yards, quarterbacks[qb_count].tds, quarterbacks[qb_count].ints, quarterbacks[qb_count].rtg, quarterbacks[qb_count].sacks)
                     k+=1
                 qb_count += 1
-
     str = str + "\n```"
     if str == "```\n\n```":
-        reaction = "❓"
         await ctx.message.add_reaction(emoji=reaction)
         return
 
@@ -725,48 +708,21 @@ async def qb(ctx, *args):
         str
     )
 #######################################################################################RUNNINGBACK STATS
-class runningback:
-    def __init__(self, name, team, age, att, yards, tds, long, ya, yg, fmb):
-        self.name = name
-        self.team = team
-        self.age = age
-        self.att = att
-        self.yards = yards
-        self.tds = tds
-        self.long = long
-        self.ya = ya
-        self.yg = yg
-        self.fmb = fmb
+
 @client.command()
 async def rb(ctx, *args):
     argLen = len(args)
     if argLen == 0:
-        reaction = "❓"
         await ctx.message.add_reaction(emoji=reaction)
         return
-    stats = rb_soup.find_all(attrs={"data-stat":True})
-    statLen = len(stats)
-    i = 19
-    j = 0
-    runningbacks = []
-    strs = ""
-    for stat in stats:
-        if j == 100:
-            break
-        if stats[i].text.lower() == "player":
-            i += 15
-            j += 1
-        else:
-            if stats[i+3].text.lower() != "rb":
-                j += 1
-                pass
-            else:
-                runningbacks.append(runningback(stats[i].text, stats[i+1].text, stats[i+2].text, stats[i+6].text, stats[i+7].text, stats[i+8].text, stats[i+10].text, stats[i+11].text, stats[i+12].text, stats[i+13].text))
-                j += 1
-            i += 15
     str = "```\n"
-    i = 0
+    runningbacks = []
+    i = 1
+    for row in rb_rows:
+        stats = row.find_all(attrs={"data-stat":True})
+        runningbacks.append(runningback(stats[i].text, stats[i+1].text, stats[i+2].text, stats[i+3].text, stats[i+6].text, stats[i+7].text, stats[i+8].text, stats[i+10].text, stats[i+11].text, stats[i+12].text, stats[i+13].text))
     if len(args) == 1:
+        i = 0
         if args[0].lower() == "touchdowns" or args[0].lower() == "tds":
             runningbacks_sorted = sorted(runningbacks, key = lambda x: int(x.tds), reverse=True)
             str = str + '{:20}{:3}\n'.format("NAME", "TD")
@@ -788,8 +744,13 @@ async def rb(ctx, *args):
         elif args[0].lower() == "y/a":
             str = str + '{:20}{:5}\n'.format("NAME", "Y/A")
             runningbacks_sorted = sorted(runningbacks, key = lambda x: float(x.ya), reverse=True)
-            while i < 10:
-                str = str + '{:20}{:4}\n'.format(runningbacks_sorted[i].name, runningbacks_sorted[i].ya)
+            count = 0
+            while i < len(runningbacks_sorted):
+                if count == 10:
+                    break
+                if(runningbacks_sorted[i].pos.lower() == "rb"):
+                    str = str + '{:20}{:4}\n'.format(runningbacks_sorted[i].name, runningbacks_sorted[i].ya)
+                    count += 1
                 i += 1
         elif args[0].lower() == "y/g":
             str = str + '{:20}{:5}\n'.format("NAME", "Y/G")
@@ -800,11 +761,15 @@ async def rb(ctx, *args):
         elif args[0].lower() == "fumbles" or args[0].lower() == "fmb":
             str = str + '{:20}{:5}\n'.format("NAME", "FMB")
             runningbacks_sorted = sorted(runningbacks, key = lambda x: float(x.fmb), reverse=True)
-            while i < 10:
-                str = str + '{:20}{:4}\n'.format(runningbacks_sorted[i].name, runningbacks_sorted[i].fmb)
+            count = 0
+            while i < len(runningbacks_sorted):
+                if count == 10:
+                    break
+                if(runningbacks_sorted[i].pos.lower() == "rb"):
+                    str = str + '{:20}{:4}\n'.format(runningbacks_sorted[i].name, runningbacks_sorted[i].fmb)
+                    count += 1
                 i += 1
         else:
-            reaction = "❓"
             await ctx.message.add_reaction(emoji=reaction)
             return
     if len(args) == 2:
@@ -832,7 +797,6 @@ async def rb(ctx, *args):
                 j += 2
             #0 less than 50
             if len(rb_comps) == 0:
-                reaction = "❓" #make this global
                 await ctx.message.add_reaction(emoji=reaction)
                 return
             while rb_count < len(runningbacks):
@@ -847,18 +811,126 @@ async def rb(ctx, *args):
             str = "```\n"
     str = str + "\n```"
     if str == "```\n\n```":
-        reaction = "❓"
         await ctx.message.add_reaction(emoji=reaction)
         return
 
     await ctx.send(
         str
     )
+#######################################################################################RECEVING STATS
+
+@client.command()
+async def wr(ctx, *args):
+    argLen = len(args)
+    if argLen == 0:
+        await ctx.message.add_reaction(emoji=reaction)
+        return
+    str = "```\n"
+    receivers = []
+    i = 1
+    for row in wr_rows:
+        stats = row.find_all(attrs={"data-stat":True})
+        receivers.append(receiver(stats[i].text, stats[i+1].text, stats[i+2].text, stats[i+3].text, stats[i+6].text, stats[i+7].text, stats[i+8].text, stats[i+9].text, stats[i+10].text, stats[i+11].text, stats[i+12].text, stats[i+13].text, stats[i+14].text, stats[i+16].text, stats[i+17].text))
+    if len(args) == 1:
+        i = 0
+        if args[0].lower() == "touchdowns" or args[0].lower() == "tds":
+            receivers_sorted = sorted(receivers, key = lambda x: int(x.tds), reverse=True)
+            str = str + '{:20}{:3}\n'.format("NAME", "TD")
+            while i < 10:
+                str = str + '{:20}{:3}\n'.format(receivers_sorted[i].name, receivers_sorted[i].tds)
+                i += 1
+        elif args[0].lower() == "yards" or args[0].lower() == "yds":
+            receivers_sorted = sorted(receivers, key = lambda x: int(x.yards), reverse=True)
+            str = str + '{:20}{:4}\n'.format("NAME", "YDS")
+            while i < 10:
+                str = str + '{:20}{:4}\n'.format(receivers_sorted[i].name, receivers_sorted[i].yards)
+                i += 1
+        elif args[0].lower() == "receptions" or args[0].lower() == "recs":
+            receivers_sorted = sorted(receivers, key = lambda x: int(x.yards), reverse=True)
+            str = str + '{:20}{:4}\n'.format("NAME", "REC")
+            while i < 10:
+                str = str + '{:20}{:4}\n'.format(receivers_sorted[i].name, receivers_sorted[i].rec)
+                i += 1
+        elif args[0].lower() == "long" or args[0].lower() == "lng":
+            receivers_sorted = sorted(receivers, key = lambda x: int(x.long), reverse=True)
+            str = str + '{:20}{:4}\n'.format("NAME", "LNG")
+            while i < 10:
+                str = str + '{:20}{:4}\n'.format(receivers_sorted[i].name, receivers_sorted[i].long)
+                i += 1
+        elif args[0].lower() == "y/g":
+            str = str + '{:20}{:5}\n'.format("NAME", "Y/G")
+            receivers_sorted = sorted(receivers, key = lambda x: float(x.yg), reverse=True)
+            while i < 10:
+                str = str + '{:20}{:4}\n'.format(receivers_sorted[i].name, receivers_sorted[i].yg)
+                i += 1
+        elif args[0].lower() == "fumbles" or args[0].lower() == "fmb":
+            str = str + '{:20}{:5}\n'.format("NAME", "FMB")
+            receivers_sorted = sorted(receivers, key = lambda x: float(x.fmb), reverse=True)
+            count = 0
+            while i < len(receivers_sorted):
+                if count == 10:
+                    break
+                if(receivers_sorted[i].pos.lower() == "wr"):
+                    str = str + '{:20}{:4}\n'.format(receivers_sorted[i].name, receivers_sorted[i].fmb)
+                    count += 1
+                i += 1
+        else:
+            await ctx.message.add_reaction(emoji=reaction)
+            return
+    if len(args) == 2:
+        wr_count = 0
+        wr_name = args[0].lower() + " " + args[1].lower()
+        while wr_count < len(receivers):
+            wr_name2 = receivers[wr_count].name.split(" ")
+            if wr_name == (wr_name2[0].lower() + " " + wr_name2[1].lower()):
+                str = str + '{:20}{:4}{:4}{:5}{:3}{:6}{:3}\n'.format("NAME", "TGT", "REC", "YDS", "TD", "Y/G", "FUM")
+                str = str + '{:20}{:4}{:4}{:5}{:3}{:6}{:3}\n'.format(receivers[wr_count].name, receivers[wr_count].tgt, receivers[wr_count].rec, receivers[wr_count].yards, receivers[wr_count].tds, receivers[wr_count].yg, receivers[wr_count].yg, receivers[wr_count].fmb)
+                break
+            wr_count += 1
+    if len(args) > 2:
+        str = str + '{:20}{:4}{:4}{:5}{:3}{:6}{:3}\n'.format("NAME", "TGT", "REC", "YDS", "TD", "Y/G", "FUM")
+        if args[0].lower() == "compare":
+            wr_comps = []
+            wr_count = 0
+            i = 1
+            j = 2
+            argLen = len(args)
+            #add qbs to compare
+            while i < argLen - 1:
+                wr_comps.append(args[i] + " " + args[j])
+                i += 2
+                j += 2
+            #0 less than 50
+            if len(wr_comps) == 0:
+                await ctx.message.add_reaction(emoji=reaction)
+                return
+            while wr_count < len(receivers):
+                k = 0
+                wr_name2 = receivers[wr_count].name.split(" ")
+                while k < len(wr_comps):
+                    if wr_comps[k].lower() == (wr_name2[0].lower() + " " + wr_name2[1].lower()):
+                        str = str + '{:20}{:4}{:4}{:5}{:3}{:6}{:3}\n'.format(receivers[wr_count].name, receivers[wr_count].tgt, receivers[wr_count].rec, receivers[wr_count].yards, receivers[wr_count].tds, receivers[wr_count].yg, receivers[wr_count].yg, receivers[wr_count].fmb)
+                    k+=1
+                wr_count += 1
+        else:
+            str = "```\n"
+    str = str + "\n```"
+    if str == "```\n\n```":
+        await ctx.message.add_reaction(emoji=reaction)
+        return
+
+    await ctx.send(
+        str
+    )
+#######################################################################################DEFENSIVE STATS
+
+#######################################################################################SPECIAL TEAMS STATS
+
+#######################################################################################INJURIES
 
 #######################################################################################INVALID COMMAND
 @client.event
 async def on_command_error(ctx, error):
-    reaction = "❓"
     await ctx.message.add_reaction(emoji=reaction)
     return
 
