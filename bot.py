@@ -10,6 +10,7 @@ import time
 from quarterback import quarterback
 from runningback import runningback
 from receiver import receiver
+from defend import defend
 from bs4 import BeautifulSoup
 
 # Credentials
@@ -35,27 +36,38 @@ def get_standings():
 #######################################################################################STATS REQUEST THREAD
 def get_stats():
     while(True):
-        request = requests.get("https://www.pro-football-reference.com/years/2020/passing.htm#passing::pass_td")
+        request = requests.get("https://www.pro-football-reference.com/years/2020/passing.htm")
         qb_soup = BeautifulSoup(request.content, 'html.parser')
         qb_table_div = qb_soup.find("div", id="div_passing")
         table = qb_table_div.find("tbody")
         global qb_rows
         qb_rows = table.find_all("tr", attrs={"class": None})
         print("quarterbacks update done")
-        request = requests.get("https://www.pro-football-reference.com/years/2020/rushing.htm#rushing_and_receiving::rush_yds_per_g")
+        request = requests.get("https://www.pro-football-reference.com/years/2020/rushing.htm")
         rb_soup = BeautifulSoup(request.content, 'html.parser')
         rb_table_div = rb_soup.find("div", id="div_rushing")
         table = rb_table_div.find("tbody")
         global rb_rows
         rb_rows = table.find_all("tr", attrs={"class": None})
         print("runningbacks update done")
-        request = requests.get("https://www.pro-football-reference.com/years/2020/receiving.htm#receiving::rec")
+        request = requests.get("https://www.pro-football-reference.com/years/2020/receiving.htm")
         wr_soup = BeautifulSoup(request.content, 'html.parser')
         wr_table_div = wr_soup.find("div", id="div_receiving")
         table = wr_table_div.find("tbody")
         global wr_rows
         wr_rows = table.find_all("tr", attrs={"class": None})
         print("receivers update done")
+        time.sleep(43200)
+
+def get_def_stats():
+    while(True):
+        request = requests.get("https://www.pro-football-reference.com/years/2020/defense.htm")
+        df_soup = BeautifulSoup(request.content, 'html.parser')
+        df_table_div = df_soup.find("div", id="div_defense")
+        table = df_table_div.find("tbody")
+        global df_rows
+        df_rows = table.find_all("tr", attrs={"class": None})
+        print("defense update done")
         time.sleep(43200)
 
 #######################################################################################INITIALIZE
@@ -68,9 +80,11 @@ async def on_ready():
     req = threading.Thread(target=get_standings)
     req2 = threading.Thread(target=get_scores)
     req3 = threading.Thread(target=get_stats)
+    req4 = threading.Thread(target=get_def_stats)
     req.start()
     req2.start()
     req3.start()
+    req4.start()
 
 #######################################################################################STANDINGS
 @client.command()
@@ -884,7 +898,7 @@ async def wr(ctx, *args):
             wr_name2 = receivers[wr_count].name.split(" ")
             if wr_name == (wr_name2[0].lower() + " " + wr_name2[1].lower()):
                 str = str + '{:20}{:4}{:4}{:5}{:3}{:6}{:3}\n'.format("NAME", "TGT", "REC", "YDS", "TD", "Y/G", "FUM")
-                str = str + '{:20}{:4}{:4}{:5}{:3}{:6}{:3}\n'.format(receivers[wr_count].name, receivers[wr_count].tgt, receivers[wr_count].rec, receivers[wr_count].yards, receivers[wr_count].tds, receivers[wr_count].yg, receivers[wr_count].yg, receivers[wr_count].fmb)
+                str = str + '{:20}{:4}{:4}{:5}{:3}{:6}{:3}\n'.format(receivers[wr_count].name, receivers[wr_count].tgt, receivers[wr_count].rec, receivers[wr_count].yards, receivers[wr_count].tds, receivers[wr_count].yg, receivers[wr_count].fmb)
                 break
             wr_count += 1
     if len(args) > 2:
@@ -909,7 +923,7 @@ async def wr(ctx, *args):
                 wr_name2 = receivers[wr_count].name.split(" ")
                 while k < len(wr_comps):
                     if wr_comps[k].lower() == (wr_name2[0].lower() + " " + wr_name2[1].lower()):
-                        str = str + '{:20}{:4}{:4}{:5}{:3}{:6}{:3}\n'.format(receivers[wr_count].name, receivers[wr_count].tgt, receivers[wr_count].rec, receivers[wr_count].yards, receivers[wr_count].tds, receivers[wr_count].yg, receivers[wr_count].yg, receivers[wr_count].fmb)
+                        str = str + '{:20}{:4}{:4}{:5}{:3}{:6}{:3}\n'.format(receivers[wr_count].name, receivers[wr_count].tgt, receivers[wr_count].rec, receivers[wr_count].yards, receivers[wr_count].tds, receivers[wr_count].yg, receivers[wr_count].fmb)
                     k+=1
                 wr_count += 1
         else:
@@ -923,7 +937,139 @@ async def wr(ctx, *args):
         str
     )
 #######################################################################################DEFENSIVE STATS
+@client.command()
+async def defense(ctx, *args):
+    argLen = len(args)
+    if argLen == 0:
+        await ctx.message.add_reaction(emoji=reaction)
+        return
+    str = "```\n"
+    defends = []
+    i = 1
+    for row in df_rows:
+        stats = row.find_all(attrs={"data-stat":True})
+        if stats[i+6].text == "":
+            stats[i+6].insert(0, "0")
+        if stats[i+10].text == "":
+            stats[i+10].insert(0, "0")
+        if stats[i+11].text == "":
+            stats[i+11].insert(0, "0")
+        if stats[i+13].text == "":
+            stats[i+13].insert(0, "0")
+        if stats[i+16].text == "":
+            stats[i+16].insert(0, "0")
+        if stats[i+17].text == "":
+            stats[i+17].insert(0, "0")
+        if stats[i+18].text == "":
+            stats[i+18].insert(0, "0")
+        if stats[i+19].text == "":
+            stats[i+19].insert(0, "0")
+        if stats[i+20].text == "":
+            stats[i+20].insert(0, "0")
+        if stats[i+21].text == "":
+            stats[i+21].insert(0, "0")
+        defends.append(defend(stats[i].text, stats[i+1].text, stats[i+2].text, stats[i+3].text, stats[i+6].text, stats[i+10].text, stats[i+11].text, stats[i+13].text, stats[i+16].text, stats[i+17].text, stats[i+18].text, stats[i+19].text, stats[i+20].text, stats[i+21].text))
+    if argLen == 1:
+        i = 0
+        if args[0].lower() == "interceptions" or args[0].lower() == "ints":
+            defenders_sorted = sorted(defends, key = lambda x: int(x.ints), reverse=True)
+            str = str + '{:20}{:3}\n'.format("NAME", "INTS")
+            while i < 10:
+                str = str + '{:20}{:3}\n'.format(defenders_sorted[i].name, defenders_sorted[i].ints)
+                i += 1
+        elif args[0].lower() == "sacks":
+            defenders_sorted = sorted(defends, key = lambda x: float(x.sacks), reverse=True)
+            str = str + '{:20}{:4}\n'.format("NAME", "SACKS")
+            while i < 10:
+                str = str + '{:20}{:4}\n'.format(defenders_sorted[i].name, defenders_sorted[i].sacks)
+                i += 1
 
+        else:
+            await ctx.message.add_reaction(emoji=reaction)
+            return
+    if len(args) == 2:
+        i = 0
+        if args[0].lower() == "passes" and args[1].lower() == "defended":
+            defenders_sorted = sorted(defends, key = lambda x: int(x.pd), reverse=True)
+            str = str + '{:20}{:3}\n'.format("NAME", "PD")
+            while i < 10:
+                str = str + '{:20}{:3}\n'.format(defenders_sorted[i].name, defenders_sorted[i].pd)
+                i += 1
+        elif args[0].lower() == "forced" and args[1].lower() == "fumbles":
+            defenders_sorted = sorted(defends, key = lambda x: int(x.ff), reverse=True)
+            str = str + '{:20}{:3}\n'.format("NAME", "FF")
+            while i < 10:
+                str = str + '{:20}{:3}\n'.format(defenders_sorted[i].name, defenders_sorted[i].ff)
+                i += 1
+        elif args[0].lower() == "fumbles" and args[1].lower() == "recovered":
+            defenders_sorted = sorted(defends, key = lambda x: int(x.fr), reverse=True)
+            str = str + '{:20}{:3}\n'.format("NAME", "FR")
+            while i < 10:
+                str = str + '{:20}{:3}\n'.format(defenders_sorted[i].name, defenders_sorted[i].fr)
+                i += 1
+        elif args[0].lower() == "combined" and args[1].lower() == "tackles":
+            defenders_sorted = sorted(defends, key = lambda x: int(x.comb), reverse=True)
+            str = str + '{:20}{:4}\n'.format("NAME", "COMB")
+            while i < 10:
+                str = str + '{:20}{:4}\n'.format(defenders_sorted[i].name, defenders_sorted[i].comb)
+                i += 1
+        elif args[0].lower() == "solo" and args[1].lower() == "tackles":
+            defenders_sorted = sorted(defends, key = lambda x: int(x.solo), reverse=True)
+            str = str + '{:20}{:4}\n'.format("NAME", "SOLO")
+            while i < 10:
+                str = str + '{:20}{:4}\n'.format(defenders_sorted[i].name, defenders_sorted[i].solo)
+                i += 1
+        elif args[0].lower() == "assisted" and args[1].lower() == "tackles":
+            defenders_sorted = sorted(defends, key = lambda x: int(x.ast), reverse=True)
+            str = str + '{:20}{:4}\n'.format("NAME", "AST")
+            while i < 10:
+                str = str + '{:20}{:4}\n'.format(defenders_sorted[i].name, defenders_sorted[i].ast)
+                i += 1
+        else:
+            df_count = 0
+            df_name = args[0].lower() + " " + args[1].lower()
+            while df_count < len(defends):
+                df_name2 = defends[df_count].name.split(" ")
+                if df_name == (df_name2[0].lower() + " " + df_name2[1].lower()):
+                    str = str + '{:20}{:4}{:4}{:4}{:5}{:5}{:4}{:4}\n'.format("NAME", "INT", "FF", "SCK", "COMB", "SOLO", "AST", "QBH")
+                    str = str + '{:20}{:4}{:4}{:4}{:5}{:5}{:4}{:4}\n'.format(defends[df_count].name, defends[df_count].ints, defends[df_count].ff, defends[df_count].sacks, defends[df_count].comb, defends[df_count].solo, defends[df_count].ast, defends[df_count].qb_hits)
+                    break
+                df_count += 1
+
+    if len(args) > 2:
+        i = 0
+        str = str + '{:20}{:4}{:4}{:4}{:5}{:5}{:4}{:4}\n'.format("NAME", "INT", "FF", "SCK", "COMB", "SOLO", "AST", "QBH")
+        if args[0].lower() == "compare":
+            df_comps = []
+            df_count = 0
+            i = 1
+            j = 2
+            argLen = len(args)
+            while i < argLen - 1:
+                df_comps.append(args[i] + " " + args[j])
+                i += 2
+                j += 2
+            if len(df_comps) == 0:
+                await ctx.message.add_reaction(emoji=reaction)
+                return
+            while df_count < len(defends):
+                k = 0
+                df_name2 = defends[df_count].name.split(" ")
+                while k < len(df_comps):
+                    if df_comps[k].lower() == (df_name2[0].lower() + " " + df_name2[1].lower()):
+                        str = str + '{:20}{:4}{:4}{:4}{:5}{:5}{:4}{:4}\n'.format(defends[df_count].name, defends[df_count].ints, defends[df_count].ff, defends[df_count].sacks, defends[df_count].comb, defends[df_count].solo, defends[df_count].ast, defends[df_count].qb_hits)
+                    k+=1
+                df_count += 1
+        else:
+            str = "```\n"
+    str = str + "\n```"
+    if str == "```\n\n```":
+        await ctx.message.add_reaction(emoji=reaction)
+        return
+
+    await ctx.send(
+        str
+    )
 #######################################################################################SPECIAL TEAMS STATS
 
 #######################################################################################INJURIES
