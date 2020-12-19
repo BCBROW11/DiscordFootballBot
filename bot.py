@@ -23,7 +23,7 @@ def get_scores():
     while(True):
         global scoreRequest
         scoreRequest = requests.get("http://static.nfl.com/liveupdate/scorestrip/scorestrip.json")
-        time.sleep(43200)
+        time.sleep(15)
 #######################################################################################STANDINGS REQUEST THREAD
 def get_standings():
     while(True):
