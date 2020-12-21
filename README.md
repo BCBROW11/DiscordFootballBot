@@ -23,7 +23,7 @@ Steps (Dev Environment):
 
 1. Install Python3.8 (if not already)
 2. Install pip package manager (if not already):
-3. Run the following commands to install libraries using pip:
+3. Run the following commands to install required libraries using pip:
 
 pip install discord.py
 pip install requests
