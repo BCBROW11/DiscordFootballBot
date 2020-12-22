@@ -7,6 +7,7 @@ import http.client
 import logging
 import threading
 import time
+from game import game
 from quarterback import quarterback
 from runningback import runningback
 from receiver import receiver
@@ -23,11 +24,11 @@ def convert_game_time(gameTime):
     pst_time_diff_from_est = 3
     if not gameTime:
         return "TBA"
-    
+
     try:
         #Time formatted in 24 hour format in EST timezone as naive time object
         time_object = datetime.strptime(gameTime, "%H:%M:%S")
-        
+
         #Change gametime to PST timezone (3 hour difference between EST and PST)
         #Unfortunately scorestrip.json time is not in a standardized UTC format
         #so can't make time_object timezone aware and use libraries for
@@ -305,16 +306,7 @@ async def standings(ctx, *args):
     await ctx.send(
         stStr
     )
-class game:
-    def __init__(self, day, home, homeScore, away, awayScore, status, timeInQuarter, gameTime):
-        self.day = day
-        self.home = home
-        self.homeScore = homeScore
-        self.away = away
-        self.awayScore = awayScore
-        self.status = status
-        self.timeInQuarter = timeInQuarter
-        self.gameTime = gameTime
+
 ##########################################################################SCORES
 @client.command()
 async def scores(ctx, *args):
