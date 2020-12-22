@@ -1,92 +1,76 @@
 import discord
-import requests
 import json
 import yaml
 from discord.ext import commands
 import http.client
 import logging
-import threading
-import time
-from quarterback import quarterback
-from runningback import runningback
-from receiver import receiver
-from defend import defend
+import requests
 from bs4 import BeautifulSoup
+from datetime import datetime, timedelta
+import time
+import traceback
+import threading
+
+from Threads.get_def_stats import get_def_stats
+from Threads.get_qb_stats import get_qb_stats
+from Threads.get_rb_stats import get_rb_stats
+from Threads.get_wr_stats import get_wr_stats
+from Threads.get_team_def_stats import get_team_def_stats
+from Threads.get_standings import get_standings
+from Threads.get_scores import get_scores
+
+from Helpers.convert_game_time import convert_game_time
+from Helpers.game import game
+from Helpers.quarterback import quarterback
+from Helpers.runningback import runningback
+from Helpers.receiver import receiver
+from Helpers.defend import defend
+from Helpers.team_defense import team_defense
 
 # Credentials
-TOKEN = 'token'
+TOKEN = 'NzMzNzkxNDQ2MzM5MDI2OTU0.XxISiQ.Gg7D4yqWLW-LNUr_fG9zTwkX6VY'
 
 # Create bot
 client = commands.Bot(command_prefix='?')
-#######################################################################################SCORE REQUEST THREAD
-def get_scores():
-    while(True):
-        global scoreRequest
-        scoreRequest = requests.get("http://static.nfl.com/liveupdate/scorestrip/scorestrip.json")
-        time.sleep(15)
-#######################################################################################STANDINGS REQUEST THREAD
-def get_standings():
-    while(True):
-        headers = {'User-Agent' : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36'}
-        request = requests.get("https://www.pro-football-reference.com/years/2020/", headers = headers)
-        global standingsSoup
-        standingsSoup = BeautifulSoup(request.content, 'html.parser')
-        print("standings update done")
-        time.sleep(43200)
-#######################################################################################STATS REQUEST THREAD
-def get_stats():
-    while(True):
-        request = requests.get("https://www.pro-football-reference.com/years/2020/passing.htm")
-        qb_soup = BeautifulSoup(request.content, 'html.parser')
-        qb_table_div = qb_soup.find("div", id="div_passing")
-        table = qb_table_div.find("tbody")
-        global qb_rows
-        qb_rows = table.find_all("tr", attrs={"class": None})
-        print("quarterbacks update done")
-        request = requests.get("https://www.pro-football-reference.com/years/2020/rushing.htm")
-        rb_soup = BeautifulSoup(request.content, 'html.parser')
-        rb_table_div = rb_soup.find("div", id="div_rushing")
-        table = rb_table_div.find("tbody")
-        global rb_rows
-        rb_rows = table.find_all("tr", attrs={"class": None})
-        print("runningbacks update done")
-        request = requests.get("https://www.pro-football-reference.com/years/2020/receiving.htm")
-        wr_soup = BeautifulSoup(request.content, 'html.parser')
-        wr_table_div = wr_soup.find("div", id="div_receiving")
-        table = wr_table_div.find("tbody")
-        global wr_rows
-        wr_rows = table.find_all("tr", attrs={"class": None})
-        print("receivers update done")
-        time.sleep(43200)
 
-def get_def_stats():
-    while(True):
-        request = requests.get("https://www.pro-football-reference.com/years/2020/defense.htm")
-        df_soup = BeautifulSoup(request.content, 'html.parser')
-        df_table_div = df_soup.find("div", id="div_defense")
-        table = df_table_div.find("tbody")
-        global df_rows
-        df_rows = table.find_all("tr", attrs={"class": None})
-        print("defense update done")
-        time.sleep(43200)
-
-#######################################################################################INITIALIZE
+"""
+on_ready starts bot and initiates threads
+"""
 @client.event
 async def on_ready():
     global reaction
     reaction = "❓"
     print('Connected to bot: {}'.format(client.user.name))
     print('Bot ID: {}'.format(client.user.id))
-    req = threading.Thread(target=get_standings)
-    req2 = threading.Thread(target=get_scores)
-    req3 = threading.Thread(target=get_stats)
-    req4 = threading.Thread(target=get_def_stats)
-    req.start()
-    req2.start()
-    req3.start()
-    req4.start()
+    global t1
+    global t2
+    global t3
+    global t4
+    global t5
+    global t6
+    global t7
+    global t8
+    t1 = get_standings()
+    t2 = get_scores()
+    t3 = get_qb_stats()
+    t4 = get_rb_stats()
+    t5 = get_wr_stats()
+    t6 = get_def_stats()
+    t7 = get_team_def_stats()
 
-#######################################################################################STANDINGS
+    t1.start()
+    t2.start()
+    t3.start()
+    t4.start()
+    t5.start()
+    t6.start()
+    t7.start()
+
+
+"""
+standings allows for user to search for current standings. builds string to return depending on game states.
+:args: ?standings <conference> <division>
+"""
 @client.command()
 async def standings(ctx, *args):
     js = {}
@@ -106,8 +90,9 @@ async def standings(ctx, *args):
     js[nfcw] = []
     js[nfcn] = []
     js[nfcs] = []
-
+    standingsSoup = t1.standingsSoup
     for s in standingsSoup.find_all('tr'):
+
         tn = s.find(attrs={'data-stat': 'team'})
         w = s.find(attrs={'data-stat': 'wins'})
         l = s.find(attrs={'data-stat': 'losses'})
@@ -268,20 +253,16 @@ async def standings(ctx, *args):
     await ctx.send(
         stStr
     )
-class game:
-    def __init__(self, day, home, homeScore, away, awayScore, status, timeInQuarter, gameTime):
-        self.day = day
-        self.home = home
-        self.homeScore = homeScore
-        self.away = away
-        self.awayScore = awayScore
-        self.status = status
-        self.timeInQuarter = timeInQuarter
-        self.gameTime = gameTime
-##########################################################################SCORES
+
+"""
+fbref builds link to pro-football-reference player page
+:args: valid statement is ?fbref firstName LastName
+
+"""
 @client.command()
 async def scores(ctx, *args):
-    str = scoreRequest.text
+
+    str = t2.scoreRequest.text
     str = str.replace(",,", ",\"\",")
     str = str.replace(",,", ",\"\",")
     y = json.loads(str)
@@ -293,15 +274,7 @@ async def scores(ctx, *args):
             i[2] = 'Final'
         if(i[2] == 'Pregame'):
             miliTime = i[1]
-            hours, minutes, seconds = miliTime.split(":")
-            hours, minutes, seconds = int(hours), int(minutes), int(seconds)
-            setting = "AM"
-            if hours > 12:
-                setting = "PM"
-                hours -= 12
-            else:
-                hours -= 3
-            i[1] = "{:02d}:{:02d}{}".format(hours, minutes, setting)
+            i[1] = convert_game_time(i[1])
         scores.append(game(i[0], i[6], i[7], i[4], i[5], i[2],i[3], i[1])) #might be i[1] for time left
 
     gmStr = "```\n"
@@ -476,21 +449,21 @@ async def scores(ctx, *args):
                     x += 3
             #III
             else:
-                #all halftime
+                #all halftime or final
                 if (scores[x].status == "Halftime" or scores[x].status == "Final") and (scores[x+1].status == "Halftime" or scores[x+1].status == "Final") and (scores[x+2].status == "Halftime" or scores[x+2].status == "Final"): #all games on line are at halftime
                     gmStr = gmStr + '{:5}{:8}{:5}{:8}{:5}{:8}'.format(scores[x].away, scores[x].awayScore, scores[x+1].away, scores[x+1].awayScore, scores[x+2].away, scores[x+2].awayScore)
                     gmStr = gmStr + "\n{:5}{:8}{:5}{:8}{:5}{:8}".format(scores[x].home, scores[x].homeScore, scores[x+1].home, scores[x+1].homeScore, scores[x+2].home, scores[x+2].homeScore)
                     gmStr = gmStr + "\n{:8}{:5}{:8}{:5}{:8}{:5}".format(scores[x].status, scores[x].timeInQuarter, scores[x+1].status, scores[x+1].timeInQuarter, scores[x+2].status, scores[x+2].timeInQuarter)
                     gmStr = gmStr + "\n\n"
                     x += 3
-                #g1 halftime, g2 not halftime, g3 not halftime
-                elif scores[x].status == "Halftime" and scores[x+1].status != "Halftime" and scores[x+2].status != "Halftime":
+                #g1 halftime or final, g2 not halftime, g3 not halftime
+                elif (scores[x].status == "Halftime" or scores[x].status == "Final") and scores[x+1].status != "Halftime" and scores[x+2].status != "Halftime":
                     gmStr = gmStr + '{:5}{:8}{:5}{:8}{:5}{:8}'.format(scores[x].away, scores[x].awayScore, scores[x+1].away, scores[x+1].awayScore, scores[x+2].away, scores[x+2].awayScore)
                     gmStr = gmStr + "\n{:5}{:8}{:5}{:8}{:5}{:8}".format(scores[x].home, scores[x].homeScore, scores[x+1].home, scores[x+1].homeScore, scores[x+2].home, scores[x+2].homeScore)
                     gmStr = gmStr + "\n{:8}{:5}Q{:4}{:8}Q{:4}{:8}".format(scores[x].status, scores[x].timeInQuarter, scores[x+1].status, scores[x+1].timeInQuarter, scores[x+2].status, scores[x+2].timeInQuarter)
                     gmStr = gmStr + "\n\n"
                     x += 3
-                #g1 halftime, g2 halftime, g3 not halftime
+                #g1 halftime or final, g2 halftime or final, g3 not halftime
                 elif (scores[x].status == "Halftime" or scores[x].status == "Final") and (scores[x+1].status == "Halftime" or scores[x+1].status == "Final") and scores[x+2].status != "Halftime":
                     gmStr = gmStr + '{:5}{:8}{:5}{:8}{:5}{:8}'.format(scores[x].away, scores[x].awayScore, scores[x+1].away, scores[x+1].awayScore, scores[x+2].away, scores[x+2].awayScore)
                     gmStr = gmStr + "\n{:5}{:8}{:5}{:8}{:5}{:8}".format(scores[x].home, scores[x].homeScore, scores[x+1].home, scores[x+1].homeScore, scores[x+2].home, scores[x+2].homeScore)
@@ -593,14 +566,11 @@ async def scores(ctx, *args):
     await ctx.send(
         gmStr
     )
-#######################################################################################HELP COMMAND
-@client.command()
-async def NFLBotHelp(ctx):
-    str = "```\n Commands: ?standings | ?standings <conference:division> (afce, nfce, etc) | ?scores | ?scores <team> (SEA, JAX, LAC, etc) | ?fbref <firstName> <lastName>\n```"
-    await ctx.send(
-        str
-    )
-#######################################################################################FBREF LINKER
+"""
+fbref builds link to pro-football-reference player page
+:args: valid statement is ?fbref firstName LastName
+
+"""
 @client.command()
 async def fbref(ctx, *args):
     if len(args) == 0:
@@ -627,8 +597,12 @@ async def fbref(ctx, *args):
     await ctx.send(
         urlStr
     )
-#######################################################################################QUARTERBACK STATS
+######################################################################################QUARTERBACK STATS
+"""
+qb allows for commands to get quarterback stats.
+:args: valid statements are ?qb touchdowns | tds,?qb interceptions | ints,?qb yards | yds,?qb ratings | rtgs,?qb completion,?qb sacks,?qb compare firstName lastName firstName lastName, and ?qb firstName lastName
 
+"""
 @client.command()
 async def qb(ctx, *args):
     argLen = len(args)
@@ -638,6 +612,8 @@ async def qb(ctx, *args):
     str = "```\n"
     quarterbacks = []
     i = 1
+    qb_rows = t3.qb_rows
+
     for row in qb_rows:
         stats = row.find_all(attrs={"data-stat":True})
         quarterbacks.append(quarterback(stats[i].text, stats[i+1].text, stats[i+2].text, stats[i+3].text, stats[i+7].text, stats[i+8].text, stats[i+9].text, stats[i+10].text, stats[i+11].text, stats[i+13].text, stats[i+21].text, stats[i+23].text))
@@ -721,8 +697,11 @@ async def qb(ctx, *args):
     await ctx.send(
         str
     )
-#######################################################################################RUNNINGBACK STATS
+"""
+rb allows for commands to get runningback stats.
+:args: valid statements are ?rb touchdowns | tds, ?rb yards | yds, ?rb long | lng,?rb y/a,?rb compare firstName lastName firstName lastName, and ?rb firstName lastName
 
+"""
 @client.command()
 async def rb(ctx, *args):
     argLen = len(args)
@@ -732,6 +711,7 @@ async def rb(ctx, *args):
     str = "```\n"
     runningbacks = []
     i = 1
+    rb_rows = t4.rb_rows
     for row in rb_rows:
         stats = row.find_all(attrs={"data-stat":True})
         runningbacks.append(runningback(stats[i].text, stats[i+1].text, stats[i+2].text, stats[i+3].text, stats[i+6].text, stats[i+7].text, stats[i+8].text, stats[i+10].text, stats[i+11].text, stats[i+12].text, stats[i+13].text))
@@ -831,8 +811,11 @@ async def rb(ctx, *args):
     await ctx.send(
         str
     )
-#######################################################################################RECEVING STATS
+"""
+wr allows for commands to get wide receiver and tight end stats.
+:args: valid statements are ?wr touchdowns | tds, ?wr yards | yds, ?wr receptions | recs,?wr long | lng,?wr y/g,?wr fumbles | fmb, ?wr compare firstName lastName firstName lastName, and ?rb firstName lastName
 
+"""
 @client.command()
 async def wr(ctx, *args):
     argLen = len(args)
@@ -842,6 +825,7 @@ async def wr(ctx, *args):
     str = "```\n"
     receivers = []
     i = 1
+    wr_rows = t5.wr_rows
     for row in wr_rows:
         stats = row.find_all(attrs={"data-stat":True})
         receivers.append(receiver(stats[i].text, stats[i+1].text, stats[i+2].text, stats[i+3].text, stats[i+6].text, stats[i+7].text, stats[i+8].text, stats[i+9].text, stats[i+10].text, stats[i+11].text, stats[i+12].text, stats[i+13].text, stats[i+14].text, stats[i+16].text, stats[i+17].text))
@@ -936,7 +920,11 @@ async def wr(ctx, *args):
     await ctx.send(
         str
     )
-#######################################################################################DEFENSIVE STATS
+"""
+defense allows for commands to get individual defensive players stats.
+:args: valid statements are ?defense interceptions | ints, ?defense sacks, ?defense passes defended, ?defense forced fumbles, ?defense fumbles recovered, ?defense combined tackles, ?defense solo tackles, ?defense assisted tackles, ?defense compare firstName lastName firstName lastName, and ?defense firstName lastName
+
+"""
 @client.command()
 async def defense(ctx, *args):
     argLen = len(args)
@@ -946,6 +934,7 @@ async def defense(ctx, *args):
     str = "```\n"
     defends = []
     i = 1
+    df_rows = t6.df_rows
     for row in df_rows:
         stats = row.find_all(attrs={"data-stat":True})
         if stats[i+6].text == "":
@@ -1070,7 +1059,148 @@ async def defense(ctx, *args):
     await ctx.send(
         str
     )
-#######################################################################################SPECIAL TEAMS STATS
+#######################################################################################Team defense
+global team_abr_map
+team_abr_map = dict(az = "arizona cardinals", atl = "atlanta falcons", buf = "buffalo bills", bal = "baltimore ravens", car = "carolina panthers", cin = "cincinnati bengals", cle = "cleveland browns", chi = "chicago bears", dal = "dallas cowboys", den = "denver broncos", det = "detroit lions", gb = "green bay packers", hou = "houston texans", ind = "indianapolis colts", kc = "kansas city chiefs", lac = "los angeles chargers", lar = "los angeles rams", jax = "jacksonville jaguars", mia = "miami dolphins", min = "minnesota vikings", ne = "new england patriots", no = "new orleans saints", nyg = "new york giants", nyj = "new york jets", lv = "las vegas raiders", phi = "philadelphia eagles", sf = "san francisco 49ers", sea = "seattle seahawks", tb = "tampa bay buccaneers", ten = "tennessee titans", was = "washington football team" )
+@client.command()
+async def tdefense(ctx, *args):
+    argLen = len(args)
+    if argLen == 0:
+        await ctx.message.add_reaction(emoji=reaction)
+        return
+    str = "```\n"
+    defenses = []
+    i = 1
+    team_def_rows = t7.team_def_rows
+    for row in team_def_rows:
+        stats = row.find_all(attrs={"data-stat":True})
+        defenses.append(team_defense(stats[i].text, stats[i+2].text, stats[i+3].text, stats[i+5].text, stats[i+6].text, stats[i+7].text, stats[i+9].text, stats[i+10].text, stats[i+11].text, stats[i+12].text, stats[i+13].text, stats[i+14].text, stats[i+16].text, stats[i+17].text, stats[i+18].text, stats[i+19].text, stats[i+21].text, stats[i+22].text))
+    if len(args) == 1:
+        i = 0
+        if args[0].lower() == "y/p":
+            defenses_sorted = sorted(defenses, key = lambda x: float(x.ypp), reverse=False)
+            str = str + '{:25}{:3}\n'.format("TEAM", "Y/P")
+            while i < 10:
+                str = str + '{:25}{:3}\n'.format(defenses_sorted[i].team, defenses_sorted[i].ypp)
+                i += 1
+        elif args[0].lower() == "yards" or args[0].lower() == "yds":
+            defenses_sorted = sorted(defenses, key = lambda x: int(x.yards), reverse=True)
+            str = str + '{:20}{:4}\n'.format("NAME", "YDS")
+            while i < 10:
+                str = str + '{:20}{:4}\n'.format(defenses_sorted[i].name, defenses_sorted[i].yards)
+                i += 1
+        elif args[0].lower() == "receptions" or args[0].lower() == "recs":
+            defenses_sorted = sorted(defenses, key = lambda x: int(x.yards), reverse=True)
+            str = str + '{:20}{:4}\n'.format("NAME", "REC")
+            while i < 10:
+                str = str + '{:20}{:4}\n'.format(defenses_sorted[i].name, defenses_sorted[i].rec)
+                i += 1
+        elif args[0].lower() == "long" or args[0].lower() == "lng":
+            defenses_sorted = sorted(defenses, key = lambda x: int(x.long), reverse=True)
+            str = str + '{:20}{:4}\n'.format("NAME", "LNG")
+            while i < 10:
+                str = str + '{:20}{:4}\n'.format(defenses_sorted[i].name, defenses_sorted[i].long)
+                i += 1
+        elif args[0].lower() == "y/g":
+            str = str + '{:20}{:5}\n'.format("NAME", "Y/G")
+            defenses_sorted = sorted(defenses, key = lambda x: float(x.yg), reverse=True)
+            while i < 10:
+                str = str + '{:20}{:4}\n'.format(defenses_sorted[i].name, defenses_sorted[i].yg)
+                i += 1
+        elif args[0].lower() == "fumbles" or args[0].lower() == "fmb":
+            str = str + '{:20}{:5}\n'.format("NAME", "FMB")
+            defenses_sorted = sorted(defenses, key = lambda x: float(x.fmb), reverse=True)
+            count = 0
+            while i < len(defenses_sorted):
+                if count == 10:
+                    break
+                if(defenses_sorted[i].pos.lower() == "team_def"):
+                    str = str + '{:20}{:4}\n'.format(defenses_sorted[i].name, defenses_sorted[i].fmb)
+                    count += 1
+                i += 1
+        else:
+            team_def_count = 0
+            team_def_name = team_abr_map[args[i].lower()]
+            while team_def_count < len(defenses):
+                if team_def_name == defenses[team_def_count].team.lower():
+                    str = str + '{:20}{:4}{:5}{:4}{:4}{:7}\n'.format("NAME", "PA", "YDS", "INT", "FUM", "PEN/YDS")
+                    str = str + '{:20}{:4}{:5}{:4}{:4}{:7}\n'.format(defenses[team_def_count].team[:19], defenses[team_def_count].points_allowed, defenses[team_def_count].yards_allowed, defenses[team_def_count].ints, defenses[team_def_count].fumbles, defenses[team_def_count].penalty_yards)
+                    break
+                team_def_count += 1
+
+    if len(args) == 2:
+
+        i = 0
+        if args[0].lower() == "y/p" and args[1].lower() == "top":
+            defenses_sorted = sorted(defenses, key = lambda x: float(x.ypp), reverse=False)
+            str = str + '{:25}{:3}\n'.format("TEAM", "Y/P")
+            while i < 10:
+                str = str + '{:25}{:3}\n'.format(defenses_sorted[i].team, defenses_sorted[i].ypp)
+                i += 1
+        elif args[0].lower() == "y/p" and args[1].lower() == "bottom":
+            defenses_sorted = sorted(defenses, key = lambda x: float(x.ypp), reverse=True)
+            str = str + '{:25}{:3}\n'.format("TEAM", "Y/P")
+            while i < 10:
+                str = str + '{:25}{:3}\n'.format(defenses_sorted[i].team, defenses_sorted[i].ypp)
+                i += 1
+        elif args[0].lower() == "turnovers" and args[1].lower() == "top":
+            defenses_sorted = sorted(defenses, key = lambda x: float(x.turnovers), reverse=True)
+            str = str + '{:25}{:3}\n'.format("TEAM", "TO")
+            while i < 10:
+                str = str + '{:25}{:3}\n'.format(defenses_sorted[i].team, defenses_sorted[i].turnovers)
+                i += 1
+        elif args[0].lower() == "turnovers" and args[1].lower() == "bottom":
+            defenses_sorted = sorted(defenses, key = lambda x: float(x.turnovers), reverse=False)
+            str = str + '{:25}{:3}\n'.format("TEAM", "TO")
+            while i < 10:
+                str = str + '{:25}{:3}\n'.format(defenses_sorted[i].team, defenses_sorted[i].turnovers)
+                i += 1
+
+    if len(args) > 2:
+        if args[0].lower() == "points" and args[1].lower() == "allowed" and args[2].lower() == "top":
+            defenses_sorted = sorted(defenses, key = lambda x: int(x.points_allowed), reverse=False)
+            str = str + '{:25}{:3}\n'.format("TEAM", "PA")
+            while i < 10:
+                str = str + '{:25}{:3}\n'.format(defenses_sorted[i].team, defenses_sorted[i].points_allowed)
+                i += 1
+        elif args[0].lower() == "points" and args[1].lower() == "allowed" and args[2].lower() == "bottom":
+            defenses_sorted = sorted(defenses, key = lambda x: int(x.points_allowed), reverse=True)
+            str = str + '{:25}{:3}\n'.format("TEAM", "PA")
+            while i < 10:
+                str = str + '{:25}{:3}\n'.format(defenses_sorted[i].team, defenses_sorted[i].points_allowed)
+                i += 1
+
+        elif args[0].lower() == "compare":
+            str = str + '{:20}{:4}{:5}{:4}{:4}{:7}\n'.format("NAME", "PA", "YDS", "INT", "FUM", "PEN/YDS")
+            team_def_comps = []
+            team_def_count = 0
+            i = 1
+            argLen = len(args)
+            while i < argLen:
+                team_def_comps.append(team_abr_map[args[i].lower()])
+                i += 1
+            if len(team_def_comps) == 0:
+                await ctx.message.add_reaction(emoji=reaction)
+                return
+            while team_def_count < len(defenses):
+                k = 0
+                team_def_name2 = defenses[team_def_count].team.lower()
+                while k < len(team_def_comps):
+                    if team_def_comps[k].lower() == (team_def_name2):
+                        str = str + '{:20}{:4}{:5}{:4}{:4}{:7}\n'.format(defenses[team_def_count].team[:19], defenses[team_def_count].points_allowed, defenses[team_def_count].yards_allowed, defenses[team_def_count].ints, defenses[team_def_count].fumbles, defenses[team_def_count].penalty_yards)
+                    k+=1
+                team_def_count += 1
+        else:
+            str = "```\n"
+    str = str + "\n```"
+    if str == "```\n\n```":
+        await ctx.message.add_reaction(emoji=reaction)
+        return
+
+    await ctx.send(
+        str
+    )
+
 
 #######################################################################################INJURIES
 

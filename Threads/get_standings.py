@@ -9,11 +9,9 @@ get_standings is a thread that scrapes pro-football-reference for standings once
 """
 global standingsSoup
 class get_standings(Thread):
-
     def __init__(self):
         self.standingsSoup = None
         Thread.__init__(self)
-
     def run(self):
         while(True):
             headers = {'User-Agent' : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36'}

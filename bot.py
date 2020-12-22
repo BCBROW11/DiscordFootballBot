@@ -22,8 +22,9 @@ from datetime import datetime, timedelta
 import time
 import traceback
 
+
 # Credentials
-TOKEN = 'token'
+TOKEN = 'NzMzNzkxNDQ2MzM5MDI2OTU0.XxISiQ.Gg7D4yqWLW-LNUr_fG9zTwkX6VY'
 
 # Create bot
 client = commands.Bot(command_prefix='?')
@@ -45,16 +46,7 @@ async def on_ready():
     req2.start()
     req3.start()
     req4.start()
-    while(True):
-        time.sleep(240)
-        print("ready")        
-        standingsSoup = getattr(get_standings, standingsSoup)
-        qb_rows = getattr(get_stats, qb_rows)
-        rb_rows = getattr(get_stats, rb_rows)
-        wr_rows = getattr(get_stats, wr_rows)
-        df_rows = getattr(get_def_stats, df_rows)
-        team_def_rows = getattr(get_stats, team_def_rows)
-        scoreRequest = getattr(get_scores, scoreRequest)
+
 
 """
 standings allows for user to search for current standings. builds string to return depending on game states.
@@ -80,7 +72,7 @@ async def standings(ctx, *args):
     js[nfcn] = []
     js[nfcs] = []
 
-    for s in standingsSoup.find_all('tr'):
+    for s in get_standings.standingsSoup.find_all('tr'):
         tn = s.find(attrs={'data-stat': 'team'})
         w = s.find(attrs={'data-stat': 'wins'})
         l = s.find(attrs={'data-stat': 'losses'})
@@ -249,7 +241,7 @@ fbref builds link to pro-football-reference player page
 """
 @client.command()
 async def scores(ctx, *args):
-    str = scoreRequest.text
+    str = get_scores.scoreRequest.text
     str = str.replace(",,", ",\"\",")
     str = str.replace(",,", ",\"\",")
     y = json.loads(str)
@@ -599,7 +591,7 @@ async def qb(ctx, *args):
     str = "```\n"
     quarterbacks = []
     i = 1
-    for row in qb_rows:
+    for row in get_stats.qb_rows:
         stats = row.find_all(attrs={"data-stat":True})
         quarterbacks.append(quarterback(stats[i].text, stats[i+1].text, stats[i+2].text, stats[i+3].text, stats[i+7].text, stats[i+8].text, stats[i+9].text, stats[i+10].text, stats[i+11].text, stats[i+13].text, stats[i+21].text, stats[i+23].text))
     if len(args) == 1:
@@ -696,7 +688,7 @@ async def rb(ctx, *args):
     str = "```\n"
     runningbacks = []
     i = 1
-    for row in rb_rows:
+    for row in get_stats.rb_rows:
         stats = row.find_all(attrs={"data-stat":True})
         runningbacks.append(runningback(stats[i].text, stats[i+1].text, stats[i+2].text, stats[i+3].text, stats[i+6].text, stats[i+7].text, stats[i+8].text, stats[i+10].text, stats[i+11].text, stats[i+12].text, stats[i+13].text))
     if len(args) == 1:
@@ -809,7 +801,7 @@ async def wr(ctx, *args):
     str = "```\n"
     receivers = []
     i = 1
-    for row in wr_rows:
+    for row in get_stats.wr_rows:
         stats = row.find_all(attrs={"data-stat":True})
         receivers.append(receiver(stats[i].text, stats[i+1].text, stats[i+2].text, stats[i+3].text, stats[i+6].text, stats[i+7].text, stats[i+8].text, stats[i+9].text, stats[i+10].text, stats[i+11].text, stats[i+12].text, stats[i+13].text, stats[i+14].text, stats[i+16].text, stats[i+17].text))
     if len(args) == 1:
@@ -917,7 +909,7 @@ async def defense(ctx, *args):
     str = "```\n"
     defends = []
     i = 1
-    for row in df_rows:
+    for row in get_stats.df_rows:
         stats = row.find_all(attrs={"data-stat":True})
         if stats[i+6].text == "":
             stats[i+6].insert(0, "0")
@@ -1053,7 +1045,7 @@ async def tdefense(ctx, *args):
     str = "```\n"
     defenses = []
     i = 1
-    for row in team_def_rows:
+    for row in get_def_stats.team_def_rows:
         stats = row.find_all(attrs={"data-stat":True})
         defenses.append(team_defense(stats[i].text, stats[i+2].text, stats[i+3].text, stats[i+5].text, stats[i+6].text, stats[i+7].text, stats[i+9].text, stats[i+10].text, stats[i+11].text, stats[i+12].text, stats[i+13].text, stats[i+14].text, stats[i+16].text, stats[i+17].text, stats[i+18].text, stats[i+19].text, stats[i+21].text, stats[i+22].text))
     if len(args) == 1:
