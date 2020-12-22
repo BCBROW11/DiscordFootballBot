@@ -24,7 +24,7 @@ import traceback
 
 
 # Credentials
-TOKEN = 'NzMzNzkxNDQ2MzM5MDI2OTU0.XxISiQ.Gg7D4yqWLW-LNUr_fG9zTwkX6VY'
+TOKEN = 'token'
 
 # Create bot
 client = commands.Bot(command_prefix='?')
