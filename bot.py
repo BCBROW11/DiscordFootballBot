@@ -29,7 +29,7 @@ from Helpers.defend import defend
 from Helpers.team_defense import team_defense
 
 # Create bot
-client = commands.Bot(command_prefix='?')
+client = commands.Bot(command_prefix='$')
 
 """
 on_ready starts bot and initiates threads

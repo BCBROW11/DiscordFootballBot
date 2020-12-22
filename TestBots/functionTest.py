@@ -16,7 +16,7 @@ from bs4 import BeautifulSoup
 import os
 
 # Create bot
-client = commands.Bot(command_prefix='?')
+client = commands.Bot(command_prefix='$')
 #######################################################################################SCORE REQUEST THREAD
 
 #######################################################################################INITIALIZE
