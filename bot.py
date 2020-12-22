@@ -1,12 +1,17 @@
 import discord
-import requests
 import json
 import yaml
 from discord.ext import commands
 import http.client
 import logging
+import requests
 import threading
-import time
+from get_def_stats import get_def_stats
+from get_stats import get_stats
+from get_standings import get_standings
+from get_scores import get_scores
+from convert_game_time import convert_game_time
+from game import game
 from quarterback import quarterback
 from runningback import runningback
 from receiver import receiver
@@ -14,100 +19,18 @@ from defend import defend
 from team_defense import team_defense
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
+import time
 import traceback
 
 # Credentials
-TOKEN = 'token'
-
-def convert_game_time(gameTime):
-    pst_time_diff_from_est = 3
-    if not gameTime:
-        return "TBA"
-    
-    try:
-        #Time formatted in 24 hour format in EST timezone as naive time object
-        time_object = datetime.strptime(gameTime, "%H:%M:%S")
-        
-        #Change gametime to PST timezone (3 hour difference between EST and PST)
-        #Unfortunately scorestrip.json time is not in a standardized UTC format
-        #so can't make time_object timezone aware and use libraries for
-        #converting between different timezones
-        #Making major assumption that scorestrip time
-        #is in DST time (if applicable), otherwise time would be off an hour
-        t = timedelta(hours=pst_time_diff_from_est)
-
-        time_object = time_object - t
-        #Create timezone string (12hour time, with AM/PM at end) EX: 5:15PM
-        gameTime = time_object.strftime("%-I:%M%p")
-
-    except Exception:
-        print ("Can't convert game time")
-        print(traceback.format_exc())
-        gameTime = "TBA"
-    return gameTime
+TOKEN = 'Nzg3NTUyNTQzODMwOTY2Mjky.X9Wndg.kIoS2nCtYg2UP66A3eohIP3bYqo'
 
 # Create bot
 client = commands.Bot(command_prefix='?')
-#######################################################################################SCORE REQUEST THREAD
-def get_scores():
-    while(True):
-        global scoreRequest
-        scoreRequest = requests.get("http://static.nfl.com/liveupdate/scorestrip/scorestrip.json")
-        time.sleep(15)
-#######################################################################################STANDINGS REQUEST THREAD
-def get_standings():
-    while(True):
-        headers = {'User-Agent' : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36'}
-        request = requests.get("https://www.pro-football-reference.com/years/2020/", headers = headers)
-        global standingsSoup
-        standingsSoup = BeautifulSoup(request.content, 'html.parser')
-        print("standings update done")
-        time.sleep(43200)
-#######################################################################################STATS REQUEST THREAD
-def get_stats():
-    while(True):
-        request = requests.get("https://www.pro-football-reference.com/years/2020/passing.htm")
-        qb_soup = BeautifulSoup(request.content, 'html.parser')
-        qb_table_div = qb_soup.find("div", id="div_passing")
-        table = qb_table_div.find("tbody")
-        global qb_rows
-        qb_rows = table.find_all("tr", attrs={"class": None})
-        print("quarterbacks update done")
-        request = requests.get("https://www.pro-football-reference.com/years/2020/rushing.htm")
-        rb_soup = BeautifulSoup(request.content, 'html.parser')
-        rb_table_div = rb_soup.find("div", id="div_rushing")
-        table = rb_table_div.find("tbody")
-        global rb_rows
-        rb_rows = table.find_all("tr", attrs={"class": None})
-        print("runningbacks update done")
-        request = requests.get("https://www.pro-football-reference.com/years/2020/receiving.htm")
-        wr_soup = BeautifulSoup(request.content, 'html.parser')
-        wr_table_div = wr_soup.find("div", id="div_receiving")
-        table = wr_table_div.find("tbody")
-        global wr_rows
-        wr_rows = table.find_all("tr", attrs={"class": None})
-        print("receivers update done")
-        request = requests.get("https://www.pro-football-reference.com/years/2020/opp.htm")
-        team_def_soup = BeautifulSoup(request.content, 'html.parser')
-        team_def_table_div = team_def_soup.find("div", id="div_team_stats")
-        table = team_def_table_div.find("tbody")
-        global team_def_rows
-        team_def_rows = table.find_all("tr", attrs={"class": None})
-        print("team defense update done")
-        time.sleep(43200)
 
-def get_def_stats():
-    while(True):
-        request = requests.get("https://www.pro-football-reference.com/years/2020/defense.htm")
-        df_soup = BeautifulSoup(request.content, 'html.parser')
-        df_table_div = df_soup.find("div", id="div_defense")
-        table = df_table_div.find("tbody")
-        global df_rows
-        df_rows = table.find_all("tr", attrs={"class": None})
-        print("defense update done")
-        time.sleep(43200)
-
-#######################################################################################INITIALIZE
+"""
+on_ready starts bot and initiates threads
+"""
 @client.event
 async def on_ready():
     global reaction
@@ -122,8 +45,21 @@ async def on_ready():
     req2.start()
     req3.start()
     req4.start()
+    while(True):
+        time.sleep(240)
+        print("ready")        
+        standingsSoup = getattr(get_standings, standingsSoup)
+        qb_rows = getattr(get_stats, qb_rows)
+        rb_rows = getattr(get_stats, rb_rows)
+        wr_rows = getattr(get_stats, wr_rows)
+        df_rows = getattr(get_def_stats, df_rows)
+        team_def_rows = getattr(get_stats, team_def_rows)
+        scoreRequest = getattr(get_scores, scoreRequest)
 
-#######################################################################################STANDINGS
+"""
+standings allows for user to search for current standings. builds string to return depending on game states.
+:args: ?standings <conference> <division>
+"""
 @client.command()
 async def standings(ctx, *args):
     js = {}
@@ -305,17 +241,12 @@ async def standings(ctx, *args):
     await ctx.send(
         stStr
     )
-class game:
-    def __init__(self, day, home, homeScore, away, awayScore, status, timeInQuarter, gameTime):
-        self.day = day
-        self.home = home
-        self.homeScore = homeScore
-        self.away = away
-        self.awayScore = awayScore
-        self.status = status
-        self.timeInQuarter = timeInQuarter
-        self.gameTime = gameTime
-##########################################################################SCORES
+
+"""
+fbref builds link to pro-football-reference player page
+:args: valid statement is ?fbref firstName LastName
+
+"""
 @client.command()
 async def scores(ctx, *args):
     str = scoreRequest.text
@@ -505,21 +436,21 @@ async def scores(ctx, *args):
                     x += 3
             #III
             else:
-                #all halftime
+                #all halftime or final
                 if (scores[x].status == "Halftime" or scores[x].status == "Final") and (scores[x+1].status == "Halftime" or scores[x+1].status == "Final") and (scores[x+2].status == "Halftime" or scores[x+2].status == "Final"): #all games on line are at halftime
                     gmStr = gmStr + '{:5}{:8}{:5}{:8}{:5}{:8}'.format(scores[x].away, scores[x].awayScore, scores[x+1].away, scores[x+1].awayScore, scores[x+2].away, scores[x+2].awayScore)
                     gmStr = gmStr + "\n{:5}{:8}{:5}{:8}{:5}{:8}".format(scores[x].home, scores[x].homeScore, scores[x+1].home, scores[x+1].homeScore, scores[x+2].home, scores[x+2].homeScore)
                     gmStr = gmStr + "\n{:8}{:5}{:8}{:5}{:8}{:5}".format(scores[x].status, scores[x].timeInQuarter, scores[x+1].status, scores[x+1].timeInQuarter, scores[x+2].status, scores[x+2].timeInQuarter)
                     gmStr = gmStr + "\n\n"
                     x += 3
-                #g1 halftime, g2 not halftime, g3 not halftime
-                elif scores[x].status == "Halftime" and scores[x+1].status != "Halftime" and scores[x+2].status != "Halftime":
+                #g1 halftime or final, g2 not halftime, g3 not halftime
+                elif (scores[x].status == "Halftime" or scores[x].status == "Final") and scores[x+1].status != "Halftime" and scores[x+2].status != "Halftime":
                     gmStr = gmStr + '{:5}{:8}{:5}{:8}{:5}{:8}'.format(scores[x].away, scores[x].awayScore, scores[x+1].away, scores[x+1].awayScore, scores[x+2].away, scores[x+2].awayScore)
                     gmStr = gmStr + "\n{:5}{:8}{:5}{:8}{:5}{:8}".format(scores[x].home, scores[x].homeScore, scores[x+1].home, scores[x+1].homeScore, scores[x+2].home, scores[x+2].homeScore)
                     gmStr = gmStr + "\n{:8}{:5}Q{:4}{:8}Q{:4}{:8}".format(scores[x].status, scores[x].timeInQuarter, scores[x+1].status, scores[x+1].timeInQuarter, scores[x+2].status, scores[x+2].timeInQuarter)
                     gmStr = gmStr + "\n\n"
                     x += 3
-                #g1 halftime, g2 halftime, g3 not halftime
+                #g1 halftime or final, g2 halftime or final, g3 not halftime
                 elif (scores[x].status == "Halftime" or scores[x].status == "Final") and (scores[x+1].status == "Halftime" or scores[x+1].status == "Final") and scores[x+2].status != "Halftime":
                     gmStr = gmStr + '{:5}{:8}{:5}{:8}{:5}{:8}'.format(scores[x].away, scores[x].awayScore, scores[x+1].away, scores[x+1].awayScore, scores[x+2].away, scores[x+2].awayScore)
                     gmStr = gmStr + "\n{:5}{:8}{:5}{:8}{:5}{:8}".format(scores[x].home, scores[x].homeScore, scores[x+1].home, scores[x+1].homeScore, scores[x+2].home, scores[x+2].homeScore)
@@ -622,7 +553,11 @@ async def scores(ctx, *args):
     await ctx.send(
         gmStr
     )
-#######################################################################################FBREF LINKER
+"""
+fbref builds link to pro-football-reference player page
+:args: valid statement is ?fbref firstName LastName
+
+"""
 @client.command()
 async def fbref(ctx, *args):
     if len(args) == 0:
@@ -649,8 +584,12 @@ async def fbref(ctx, *args):
     await ctx.send(
         urlStr
     )
-#######################################################################################QUARTERBACK STATS
+######################################################################################QUARTERBACK STATS
+"""
+qb allows for commands to get quarterback stats.
+:args: valid statements are ?qb touchdowns | tds,?qb interceptions | ints,?qb yards | yds,?qb ratings | rtgs,?qb completion,?qb sacks,?qb compare firstName lastName firstName lastName, and ?qb firstName lastName
 
+"""
 @client.command()
 async def qb(ctx, *args):
     argLen = len(args)
@@ -743,8 +682,11 @@ async def qb(ctx, *args):
     await ctx.send(
         str
     )
-#######################################################################################RUNNINGBACK STATS
+"""
+rb allows for commands to get runningback stats.
+:args: valid statements are ?rb touchdowns | tds, ?rb yards | yds, ?rb long | lng,?rb y/a,?rb compare firstName lastName firstName lastName, and ?rb firstName lastName
 
+"""
 @client.command()
 async def rb(ctx, *args):
     argLen = len(args)
@@ -853,8 +795,11 @@ async def rb(ctx, *args):
     await ctx.send(
         str
     )
-#######################################################################################RECEVING STATS
+"""
+wr allows for commands to get wide receiver and tight end stats.
+:args: valid statements are ?wr touchdowns | tds, ?wr yards | yds, ?wr receptions | recs,?wr long | lng,?wr y/g,?wr fumbles | fmb, ?wr compare firstName lastName firstName lastName, and ?rb firstName lastName
 
+"""
 @client.command()
 async def wr(ctx, *args):
     argLen = len(args)
@@ -958,7 +903,11 @@ async def wr(ctx, *args):
     await ctx.send(
         str
     )
-#######################################################################################DEFENSIVE STATS
+"""
+defense allows for commands to get individual defensive players stats.
+:args: valid statements are ?defense interceptions | ints, ?defense sacks, ?defense passes defended, ?defense forced fumbles, ?defense fumbles recovered, ?defense combined tackles, ?defense solo tackles, ?defense assisted tackles, ?defense compare firstName lastName firstName lastName, and ?defense firstName lastName
+
+"""
 @client.command()
 async def defense(ctx, *args):
     argLen = len(args)
