@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 import time
 import traceback
 import threading
+import os
 
 from Threads.get_def_stats import get_def_stats
 from Threads.get_qb_stats import get_qb_stats
@@ -26,9 +27,6 @@ from Helpers.runningback import runningback
 from Helpers.receiver import receiver
 from Helpers.defend import defend
 from Helpers.team_defense import team_defense
-
-# Credentials
-TOKEN = 'token'
 
 # Create bot
 client = commands.Bot(command_prefix='?')
@@ -1211,4 +1209,36 @@ async def on_command_error(ctx, error):
     await ctx.message.add_reaction(emoji=reaction)
     return
 
-client.run(TOKEN)
+def read_token_settings():
+    #Token file located in root of workspace
+    token_filename = "settings.json"
+    #Get current working directory of this python file
+    cwd = os.path.dirname(os.path.realpath(__file__))
+
+    try:
+        #<token_filename> is located in 1 directory above this one
+        data = open(cwd + '/../' + token_filename)
+    except:
+        print(token_filename + " file does not exist in ../" + cwd)
+        return None
+
+    settings = json.load(data)
+
+    token = settings.get('TOKEN')
+    if token is None:
+        print("Bot token not defined. Please define one in ../settings.json")
+        return None
+
+    return token
+
+#main entry point for bot
+def testBot_main():
+    token = read_token_settings()
+    if token:
+        client.run(token)
+    else:
+        print("Unable to start bot. Token does not exist!")
+
+
+if __name__ == '__main__':
+    testBot_main()
