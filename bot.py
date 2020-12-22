@@ -13,9 +13,38 @@ from receiver import receiver
 from defend import defend
 from team_defense import team_defense
 from bs4 import BeautifulSoup
+from datetime import datetime, timedelta
+import traceback
 
 # Credentials
 TOKEN = 'token'
+
+def convert_game_time(gameTime):
+    pst_time_diff_from_est = 3
+    if not gameTime:
+        return "TBA"
+    
+    try:
+        #Time formatted in 24 hour format in EST timezone as naive time object
+        time_object = datetime.strptime(gameTime, "%H:%M:%S")
+        
+        #Change gametime to PST timezone (3 hour difference between EST and PST)
+        #Unfortunately scorestrip.json time is not in a standardized UTC format
+        #so can't make time_object timezone aware and use libraries for
+        #converting between different timezones
+        #Making major assumption that scorestrip time
+        #is in DST time (if applicable), otherwise time would be off an hour
+        t = timedelta(hours=pst_time_diff_from_est)
+
+        time_object = time_object - t
+        #Create timezone string (12hour time, with AM/PM at end) EX: 5:15PM
+        gameTime = time_object.strftime("%-I:%M%p")
+
+    except Exception:
+        print ("Can't convert game time")
+        print(traceback.format_exc())
+        gameTime = "TBA"
+    return gameTime
 
 # Create bot
 client = commands.Bot(command_prefix='?')
@@ -301,15 +330,7 @@ async def scores(ctx, *args):
             i[2] = 'Final'
         if(i[2] == 'Pregame'):
             miliTime = i[1]
-            hours, minutes, seconds = miliTime.split(":")
-            hours, minutes, seconds = int(hours), int(minutes), int(seconds)
-            setting = "AM"
-            if hours > 12:
-                setting = "PM"
-                hours -= 12
-            else:
-                hours -= 3
-            i[1] = "{:02d}:{:02d}{}".format(hours, minutes, setting)
+            i[1] = convert_game_time(i[1])
         scores.append(game(i[0], i[6], i[7], i[4], i[5], i[2],i[3], i[1])) #might be i[1] for time left
 
     gmStr = "```\n"
