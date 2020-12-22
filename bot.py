@@ -23,7 +23,7 @@ import time
 import traceback
 
 # Credentials
-TOKEN = 'Nzg3NTUyNTQzODMwOTY2Mjky.X9Wndg.kIoS2nCtYg2UP66A3eohIP3bYqo'
+TOKEN = 'token'
 
 # Create bot
 client = commands.Bot(command_prefix='?')
