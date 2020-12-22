@@ -13,6 +13,9 @@ class get_scores(Thread):
         self.scoreRequest = None
         Thread.__init__(self)
     def run(self):
-        while(True):
-            self.scoreRequest = requests.get("http://static.nfl.com/liveupdate/scorestrip/scorestrip.json")
-            time.sleep(15)
+        try:
+            while(True):
+                self.scoreRequest = requests.get("http://static.nfl.com/liveupdate/scorestrip/scorestrip.json")
+                time.sleep(15)
+        except Exception:
+            print("Excpetion in get_scores: \n" + exception)

@@ -16,11 +16,14 @@ class get_rb_stats(Thread):
         Thread.__init__(self)
 
     def run(self):
-        while(True):
-            request = requests.get("https://www.pro-football-reference.com/years/2020/rushing.htm")
-            rb_soup = BeautifulSoup(request.content, 'html.parser')
-            rb_table_div = rb_soup.find("div", id="div_rushing")
-            table = rb_table_div.find("tbody")
-            self.rb_rows = table.find_all("tr", attrs={"class": None})
-            print("runningbacks update done")
-            time.sleep(43200)
+        try:
+            while(True):
+                request = requests.get("https://www.pro-football-reference.com/years/2020/rushing.htm")
+                rb_soup = BeautifulSoup(request.content, 'html.parser')
+                rb_table_div = rb_soup.find("div", id="div_rushing")
+                table = rb_table_div.find("tbody")
+                self.rb_rows = table.find_all("tr", attrs={"class": None})
+                print("runningbacks update done")
+                time.sleep(43200)
+        except Exception:
+            print("Excpetion in rb_stats: \n" + exception)
