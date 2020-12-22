@@ -1213,18 +1213,21 @@ def read_token_settings():
     #Settings file
     token_filename = "settings.json"
     cwd = os.path.dirname(os.path.realpath(__file__))
-    with open(cwd + '/' + token_filename) as data:
-        settings = json.load(data)
-
-        token = settings.get('TOKEN')
-        if token is None:
-            print("Bot token not defined. Please define one in settings.json")
-            return None
     
-        return token
-    if not data:
-        print(token_filename + "does not exist in" + cwd)
+    try:
+        data = open(cwd + '/' + token_filename)
+    except:
+        print(token_filename + " file does not exist in " + cwd)
         return None
+    
+    settings = json.load(data)
+
+    token = settings.get('TOKEN')
+    if token is None:
+        print("Bot token not defined. Please define one in settings.json")
+        return None
+
+    return token
 
 #main entry point for bot
 def footballBot_main():

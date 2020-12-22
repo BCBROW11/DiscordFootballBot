@@ -1214,20 +1214,22 @@ def read_token_settings():
     token_filename = "settings.json"
     #Get current working directory of this python file
     cwd = os.path.dirname(os.path.realpath(__file__))
-    print(cwd)
-    #<token_filename> is located in 1 directory above this one
-    with open(cwd + '/../' + token_filename) as data:
-        settings = json.load(data)
 
-        token = settings.get('TOKEN')
-        if token is None:
-            print("Bot token not defined. Please define one in settings.json")
-            return None
-    
-        return token
-    if not data:
-        print(token_filename + "does not exist!")
+    try:
+        #<token_filename> is located in 1 directory above this one
+        data = open(cwd + '/../' + token_filename)
+    except:
+        print(token_filename + " file does not exist in ../" + cwd)
         return None
+
+    settings = json.load(data)
+
+    token = settings.get('TOKEN')
+    if token is None:
+        print("Bot token not defined. Please define one in ../settings.json")
+        return None
+
+    return token
 
 #main entry point for bot
 def testBot_main():
