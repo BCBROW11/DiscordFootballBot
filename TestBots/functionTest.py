@@ -13,9 +13,7 @@ from receiver import receiver
 from defend import defend
 from team_defense import team_defense
 from bs4 import BeautifulSoup
-
-# Credentials
-TOKEN = 'token'
+import os
 
 # Create bot
 client = commands.Bot(command_prefix='?')
@@ -183,4 +181,33 @@ async def on_command_error(ctx, error):
     await ctx.message.add_reaction(emoji=reaction)
     return
 
-client.run(TOKEN)
+def read_token_settings():
+    #Token file located in root of workspace
+    token_filename = "settings.json"
+    #Get current working directory of this python file
+    cwd = os.path.dirname(os.path.realpath(__file__))
+    #<token_filename> is located in 1 directory above this one
+    with open(cwd + '/../' + token_filename) as data:
+        settings = json.load(data)
+
+        token = settings.get('TOKEN')
+        if token is None:
+            print("Bot token not defined. Please define one in settings.json")
+            return None
+    
+        return token
+    if not data:
+        print(token_filename + "does not exist!")
+        return None
+
+#main entry point for bot
+def functionTest_main():
+    token = read_token_settings()
+    if token:
+        client.run(token)
+    else:
+        print("Unable to start bot. Token does not exist!")
+
+
+if __name__ == '__main__':
+    functionTest_main()

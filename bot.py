@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 import time
 import traceback
 import threading
+import os
 
 from Threads.get_def_stats import get_def_stats
 from Threads.get_qb_stats import get_qb_stats
@@ -26,9 +27,6 @@ from Helpers.runningback import runningback
 from Helpers.receiver import receiver
 from Helpers.defend import defend
 from Helpers.team_defense import team_defense
-
-# Credentials
-TOKEN = 'token'
 
 # Create bot
 client = commands.Bot(command_prefix='?')
@@ -1211,4 +1209,31 @@ async def on_command_error(ctx, error):
     await ctx.message.add_reaction(emoji=reaction)
     return
 
-client.run(TOKEN)
+def read_token_settings():
+    #Settings file
+    token_filename = "settings.json"
+    cwd = os.path.dirname(os.path.realpath(__file__))
+    with open(cwd + '/' + token_filename) as data:
+        settings = json.load(data)
+
+        token = settings.get('TOKEN')
+        if token is None:
+            print("Bot token not defined. Please define one in settings.json")
+            return None
+    
+        return token
+    if not data:
+        print(token_filename + "does not exist in" + cwd)
+        return None
+
+#main entry point for bot
+def footballBot_main():
+    token = read_token_settings()
+    if token:
+        client.run(token)
+    else:
+        print("Unable to start bot. Token does not exist!")
+
+
+if __name__ == '__main__':
+    footballBot_main()
