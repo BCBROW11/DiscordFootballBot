@@ -72,7 +72,8 @@ standings allows for user to search for current standings. builds string to retu
 """
 @client.command()
 async def standings(ctx, *args):
-    js = {}
+    js = t1.js
+    stStr = "```\n"
     afce = "AFC East"
     afcw = "AFC West"
     afcn = "AFC North"
@@ -81,43 +82,6 @@ async def standings(ctx, *args):
     nfcw = "NFC West"
     nfcn = "NFC North"
     nfcs = "NFC South"
-    js[afce] = []
-    js[afcw] = []
-    js[afcn] = []
-    js[afcs] = []
-    js[nfce] = []
-    js[nfcw] = []
-    js[nfcn] = []
-    js[nfcs] = []
-    standingsSoup = t1.standingsSoup
-    for s in standingsSoup.find_all('tr'):
-
-        tn = s.find(attrs={'data-stat': 'team'})
-        w = s.find(attrs={'data-stat': 'wins'})
-        l = s.find(attrs={'data-stat': 'losses'})
-        t = s.find(attrs={'data-stat': 'ties'})
-        #AFC Teams
-        if tn != None and (tn.text == "Buffalo Bills" or tn.text == "Miami Dolphins" or tn.text == "New England Patriots" or tn.text == "New York Jets"):
-            js[afce].append({"team":tn.text, "wins":w.text, "losses":l.text, "ties":t.text})
-        if tn != None and (tn.text == "Pittsburgh Steelers" or tn.text == "Cleveland Browns" or tn.text == "Baltimore Ravens" or tn.text == "Cincinnati Bengals"):
-            js[afcn].append({"team":tn.text, "wins":w.text, "losses":l.text, "ties":t.text})
-        if tn != None and (tn.text == "Indianapolis Colts" or tn.text == "Tennessee Titans" or tn.text == "Houston Texans" or tn.text == "Jacksonville Jaguars"):
-            js[afcs].append({"team":tn.text, "wins":w.text, "losses":l.text, "ties":t.text})
-        if tn != None and (tn.text == "Kansas City Chiefs" or tn.text == "Las Vegas Raiders" or tn.text == "Denver Broncos" or tn.text == "Los Angeles Chargers"):
-            js[afcw].append({"team":tn.text, "wins":w.text, "losses":l.text, "ties":t.text})
-        #NFC Teams
-        if tn != None and (tn.text == "Washington Football Team" or tn.text == "Dallas Cowboys" or tn.text == "New York Giants" or tn.text == "Philadelphia Eagles"):
-            js[nfce].append({"team":tn.text, "wins":w.text, "losses":l.text, "ties":t.text})
-        if tn != None and (tn.text == "Green Bay Packers" or tn.text == "Minnesota Vikings" or tn.text == "Detroit Lions" or tn.text == "Chicago Bears"):
-            js[nfcn].append({"team":tn.text, "wins":w.text, "losses":l.text, "ties":t.text})
-        if tn != None and (tn.text == "Tampa Bay Buccaneers" or tn.text == "New Orleans Saints" or tn.text == "Atlanta Falcons" or tn.text == "Carolina Panthers"):
-            js[nfcs].append({"team":tn.text, "wins":w.text, "losses":l.text, "ties":t.text})
-        if tn != None and (tn.text == "San Francisco 49ers" or tn.text == "Arizona Cardinals" or tn.text == "Seattle Seahawks" or tn.text == "Los Angeles Rams"):
-            js[nfcw].append({"team":tn.text, "wins":w.text, "losses":l.text, "ties":t.text})
-
-
-    stStr = "```\n"
-
     if args:
         div = args[0].lower() + " " + args[1].lower()
         if div == "nfc west" or div == "nfc w":
@@ -261,10 +225,7 @@ fbref builds link to pro-football-reference player page
 @client.command()
 async def scores(ctx, *args):
 
-    str = t2.scoreRequest.text
-    str = str.replace(",,", ",\"\",")
-    str = str.replace(",,", ",\"\",")
-    y = json.loads(str)
+    y = t2.json_score
 
     scores = []
 
@@ -609,13 +570,7 @@ async def qb(ctx, *args):
         await ctx.message.add_reaction(emoji=reaction)
         return
     str = "```\n"
-    quarterbacks = []
-    i = 1
-    qb_rows = t3.qb_rows
-
-    for row in qb_rows:
-        stats = row.find_all(attrs={"data-stat":True})
-        quarterbacks.append(quarterback(stats[i].text, stats[i+1].text, stats[i+2].text, stats[i+3].text, stats[i+7].text, stats[i+8].text, stats[i+9].text, stats[i+10].text, stats[i+11].text, stats[i+13].text, stats[i+21].text, stats[i+23].text))
+    quarterbacks = t3.quarterbacks
     if len(args) == 1:
         i = 0
         if args[0].lower() == "touchdowns" or args[0].lower() == "tds":
@@ -708,12 +663,7 @@ async def rb(ctx, *args):
         await ctx.message.add_reaction(emoji=reaction)
         return
     str = "```\n"
-    runningbacks = []
-    i = 1
-    rb_rows = t4.rb_rows
-    for row in rb_rows:
-        stats = row.find_all(attrs={"data-stat":True})
-        runningbacks.append(runningback(stats[i].text, stats[i+1].text, stats[i+2].text, stats[i+3].text, stats[i+6].text, stats[i+7].text, stats[i+8].text, stats[i+10].text, stats[i+11].text, stats[i+12].text, stats[i+13].text))
+    runningbacks = t4.runningbacks
     if len(args) == 1:
         i = 0
         if args[0].lower() == "touchdowns" or args[0].lower() == "tds":
@@ -822,12 +772,7 @@ async def wr(ctx, *args):
         await ctx.message.add_reaction(emoji=reaction)
         return
     str = "```\n"
-    receivers = []
-    i = 1
-    wr_rows = t5.wr_rows
-    for row in wr_rows:
-        stats = row.find_all(attrs={"data-stat":True})
-        receivers.append(receiver(stats[i].text, stats[i+1].text, stats[i+2].text, stats[i+3].text, stats[i+6].text, stats[i+7].text, stats[i+8].text, stats[i+9].text, stats[i+10].text, stats[i+11].text, stats[i+12].text, stats[i+13].text, stats[i+14].text, stats[i+16].text, stats[i+17].text))
+    receivers = t5.receivers
     if len(args) == 1:
         i = 0
         if args[0].lower() == "touchdowns" or args[0].lower() == "tds":
@@ -892,12 +837,10 @@ async def wr(ctx, *args):
             i = 1
             j = 2
             argLen = len(args)
-            #add qbs to compare
             while i < argLen - 1:
                 wr_comps.append(args[i] + " " + args[j])
                 i += 2
                 j += 2
-            #0 less than 50
             if len(wr_comps) == 0:
                 await ctx.message.add_reaction(emoji=reaction)
                 return
@@ -931,32 +874,8 @@ async def defense(ctx, *args):
         await ctx.message.add_reaction(emoji=reaction)
         return
     str = "```\n"
-    defends = []
-    i = 1
-    df_rows = t6.df_rows
-    for row in df_rows:
-        stats = row.find_all(attrs={"data-stat":True})
-        if stats[i+6].text == "":
-            stats[i+6].insert(0, "0")
-        if stats[i+10].text == "":
-            stats[i+10].insert(0, "0")
-        if stats[i+11].text == "":
-            stats[i+11].insert(0, "0")
-        if stats[i+13].text == "":
-            stats[i+13].insert(0, "0")
-        if stats[i+16].text == "":
-            stats[i+16].insert(0, "0")
-        if stats[i+17].text == "":
-            stats[i+17].insert(0, "0")
-        if stats[i+18].text == "":
-            stats[i+18].insert(0, "0")
-        if stats[i+19].text == "":
-            stats[i+19].insert(0, "0")
-        if stats[i+20].text == "":
-            stats[i+20].insert(0, "0")
-        if stats[i+21].text == "":
-            stats[i+21].insert(0, "0")
-        defends.append(defend(stats[i].text, stats[i+1].text, stats[i+2].text, stats[i+3].text, stats[i+6].text, stats[i+10].text, stats[i+11].text, stats[i+13].text, stats[i+16].text, stats[i+17].text, stats[i+18].text, stats[i+19].text, stats[i+20].text, stats[i+21].text))
+    defends = t6.defends
+
     if argLen == 1:
         i = 0
         if args[0].lower() == "interceptions" or args[0].lower() == "ints":
@@ -1068,12 +987,8 @@ async def tdefense(ctx, *args):
         await ctx.message.add_reaction(emoji=reaction)
         return
     str = "```\n"
-    defenses = []
-    i = 1
-    team_def_rows = t7.team_def_rows
-    for row in team_def_rows:
-        stats = row.find_all(attrs={"data-stat":True})
-        defenses.append(team_defense(stats[i].text, stats[i+2].text, stats[i+3].text, stats[i+5].text, stats[i+6].text, stats[i+7].text, stats[i+9].text, stats[i+10].text, stats[i+11].text, stats[i+12].text, stats[i+13].text, stats[i+14].text, stats[i+16].text, stats[i+17].text, stats[i+18].text, stats[i+19].text, stats[i+21].text, stats[i+22].text))
+    defenses = t7.defenses
+
     if len(args) == 1:
         i = 0
         if args[0].lower() == "y/p":
@@ -1210,27 +1125,29 @@ async def on_command_error(ctx, error):
     return
 
 def read_token_settings():
-    #Settings file
+    #Token file located in root of workspace
     token_filename = "settings.json"
+    #Get current working directory of this python file
     cwd = os.path.dirname(os.path.realpath(__file__))
-    
+
     try:
-        data = open(cwd + '/' + token_filename)
+        #<token_filename> is located in 1 directory above this one
+        data = open(token_filename)
     except:
-        print(token_filename + " file does not exist in " + cwd)
+        print(token_filename + " file does not exist in ../" + cwd)
         return None
-    
+
     settings = json.load(data)
 
     token = settings.get('TOKEN')
     if token is None:
-        print("Bot token not defined. Please define one in settings.json")
+        print("Bot token not defined. Please define one in ../settings.json")
         return None
 
     return token
 
 #main entry point for bot
-def footballBot_main():
+def testBot_main():
     token = read_token_settings()
     if token:
         client.run(token)
@@ -1239,4 +1156,4 @@ def footballBot_main():
 
 
 if __name__ == '__main__':
-    footballBot_main()
+    testBot_main()

@@ -3,16 +3,17 @@ import requests
 import time
 import threading
 from threading import Thread
+from Helpers.team_defense import team_defense
 
 """
 get_stats is a thread that scrapes pro-football-reference for stats once every 12 hours
 """
-global team_def_rows
+global defenses
 
 class get_team_def_stats(Thread):
 
     def __init__(self):
-        self.team_def_rows = None
+        self.defenses = []
         Thread.__init__(self)
 
     def run(self):
@@ -22,7 +23,11 @@ class get_team_def_stats(Thread):
                 team_def_soup = BeautifulSoup(request.content, 'html.parser')
                 team_def_table_div = team_def_soup.find("div", id="div_team_stats")
                 table = team_def_table_div.find("tbody")
-                self.team_def_rows = table.find_all("tr", attrs={"class": None})
+                team_def_rows = table.find_all("tr", attrs={"class": None})
+                i = 1
+                for row in team_def_rows:
+                    stats = row.find_all(attrs={"data-stat":True})
+                    self.defenses.append(team_defense(stats[i].text, stats[i+2].text, stats[i+3].text, stats[i+5].text, stats[i+6].text, stats[i+7].text, stats[i+9].text, stats[i+10].text, stats[i+11].text, stats[i+12].text, stats[i+13].text, stats[i+14].text, stats[i+16].text, stats[i+17].text, stats[i+18].text, stats[i+19].text, stats[i+21].text, stats[i+22].text))
                 print("team defense update done")
                 time.sleep(43200)
         except Exception:

@@ -3,16 +3,17 @@ import requests
 import time
 import threading
 from threading import Thread
+from Helpers.quarterback import quarterback
 
 """
 get_stats is a thread that scrapes pro-football-reference for stats once every 12 hours
 """
-global qb_rows
+global quarterbacks
 
 class get_qb_stats(Thread):
 
     def __init__(self):
-        self.qb_rows = None
+        self.quarterbacks = []
         Thread.__init__(self)
 
     def run(self):
@@ -22,7 +23,11 @@ class get_qb_stats(Thread):
                 qb_soup = BeautifulSoup(request.content, 'html.parser')
                 qb_table_div = qb_soup.find("div", id="div_passing")
                 table = qb_table_div.find("tbody")
-                self.qb_rows = table.find_all("tr", attrs={"class": None})
+                qb_rows = table.find_all("tr", attrs={"class": None})
+                i = 1
+                for row in qb_rows:
+                    stats = row.find_all(attrs={"data-stat":True})
+                    self.quarterbacks.append(quarterback(stats[i].text, stats[i+1].text, stats[i+2].text, stats[i+3].text, stats[i+7].text, stats[i+8].text, stats[i+9].text, stats[i+10].text, stats[i+11].text, stats[i+13].text, stats[i+21].text, stats[i+23].text))
                 print("quarterbacks update done")
                 time.sleep(43200)
         except Exception:
