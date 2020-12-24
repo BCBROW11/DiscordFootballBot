@@ -14,13 +14,14 @@ class get_scores(Thread):
         self.json_score = None
         Thread.__init__(self)
     def run(self):
-        try:
             while(True):
-                scoreRequest = requests.get("http://static.nfl.com/liveupdate/scorestrip/scorestrip.json")
-                str = scoreRequest.text
-                str = str.replace(",,", ",\"\",")
-                str = str.replace(",,", ",\"\",")
-                self.json_score = json.loads(str)
-                time.sleep(15)
-        except Exception:
-            print("Excpetion in get_scores: \n" + exception)
+                try:
+                    scoreRequest = requests.get("http://static.nfl.com/liveupdate/scorestrip/scorestrip.json")
+                    str = scoreRequest.text
+                    str = str.replace(",,", ",\"\",")
+                    str = str.replace(",,", ",\"\",")
+                    self.json_score = json.loads(str)
+                    time.sleep(15)
+                except Exception:
+                    print("Excpetion in get_scores: \n" + exception)
+                    pass
