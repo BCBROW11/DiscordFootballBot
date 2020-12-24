@@ -29,7 +29,7 @@ from Helpers.defend import defend
 from Helpers.team_defense import team_defense
 
 # Create bot
-client = commands.Bot(command_prefix='$')
+client = commands.Bot(command_prefix='$', help_command=None)
 
 """
 on_ready starts bot and initiates threads
@@ -1266,6 +1266,47 @@ async def fbref(ctx, *args):
     await ctx.send(
         urlStr
     )
+#######################################################################################HELP
+@client.command()
+async def help(ctx, *args):
+    if len(args) == 0:
+        embedVar = discord.Embed(title="Football Bot Help", color=0x00ff00)
+        embedVar.add_field(name="qb", value = "Quarterback stats", inline=True)
+        embedVar.add_field(name="rb", value = "Runningback stats", inline=True)
+        embedVar.add_field(name="wr", value = "Wide Receiver/Tight End stats", inline=True)
+        embedVar.add_field(name="defense", value = "Individual defender stats", inline=True)
+        embedVar.add_field(name="tdefense", value = "Team defense stats", inline=True)
+        embedVar.add_field(name="fbref", value = "PFBR player page", inline=True)
+        embedVar.add_field(name="Additional Help", value = "Type $help command for more info on a command. You can also type $help category for more info on a category.", inline=True)
+        await ctx.send(
+            embed = embedVar
+        )
+    else:
+        if args[0].lower() == "qb":
+            embedVar = discord.Embed(title="Football Bot Help", color=0x00ff00)
+            embedVar.add_field(name="qb", value = "touchdowns\ninterceptions\nsacks\nyards\nratings\nQBFName QBLName\ncompare QB1FName QB1LName QB2FName QB2LName", inline=True)
+        elif args[0].lower() == "rb":
+            embedVar = discord.Embed(title="Football Bot Help", color=0x00ff00)
+            embedVar.add_field(name="rb", value = "touchdowns\nyards\nlong\nfumbles\ny/a\ny/g\nRBFName RBLName\ncompare RB1FName RB1LName RB2FName RB2LName", inline=True)
+        elif args[0].lower() == "wr":
+            embedVar = discord.Embed(title="Football Bot Help", color=0x00ff00)
+            embedVar.add_field(name="wr", value = "touchdowns\nyards\nlong\nfumbles\ny/g\nreceptions\nWRFName WRLName\ncompare WR1FName WR1LName WR2FName WR2LName", inline=True)
+        elif args[0].lower() == "defense":
+            embedVar = discord.Embed(title="Football Bot Help", color=0x00ff00)
+            embedVar.add_field(name="defense", value = "interceptions\nsacks\nsolo tackles\ncombined tackles\nassisted tackles\npasses defended\nFName LName\ncompare 1FName 1LName 2FName 2LName", inline=True)
+        elif args[0].lower() == "tdefense":
+            embedVar = discord.Embed(title="Football Bot Help", color=0x00ff00)
+            embedVar.add_field(name="tdefense", value = "interceptions top/bottom\nfumbles top/bottom\nturnovers top/bottom\ny/p top/bottom\nyards top/bottom\npenalties top/bottom\npenalty yards top/bottom\npoints allowed top/bottom\npassing touchdowns top/bottom\npassing yards top/bottom\nrushing touchdowns top/bottom\nrushing yards top/bottom\nteam abr (SEA,JAX,KC, etc)\ncompare SEA JAX KC", inline=True)
+        elif args[0].lower() == "fbref":
+            embedVar = discord.Embed(title="Football Bot Help", color=0x00ff00)
+            embedVar.add_field(name="fbref", value = "FName LName", inline=True)
+        else:
+            await ctx.send(
+                "```\nCommand not found. Type $help for more information.\n```"
+                )
+        await ctx.send(
+            embed = embedVar
+        )
 
 #######################################################################################INVALID COMMAND
 @client.event
