@@ -1277,7 +1277,7 @@ async def help(ctx, *args):
         embedVar.add_field(name="defense", value = "Individual defender stats", inline=True)
         embedVar.add_field(name="tdefense", value = "Team defense stats", inline=True)
         embedVar.add_field(name="fbref", value = "PFBR player page", inline=True)
-        embedVar.add_field(name="Additional Help", value = "Type $help command for more info on a command. You can also type $help category for more info on a category.", inline=True)
+        embedVar.add_field(name="Additional Help", value = "Type $help command for more info on a command.", inline=True)
         await ctx.send(
             embed = embedVar
         )
