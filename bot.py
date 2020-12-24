@@ -498,41 +498,39 @@ async def tdefense(ctx, *args):
             while i < 10:
                 str = str + '{:25}{:3}\n'.format(defenses_sorted[i].team, defenses_sorted[i].ypp)
                 i += 1
-        elif args[0].lower() == "yards" or args[0].lower() == "yds":
-            defenses_sorted = sorted(defenses, key = lambda x: int(x.yards), reverse=True)
-            str = str + '{:20}{:4}\n'.format("NAME", "YDS")
+################################################################################################################
+
+        elif args[0].lower() == "interceptions" or args[0].lower() == "ints":
+            defenses_sorted = sorted(defenses, key = lambda x: float(x.ints), reverse=True)
+            str = str + '{:25}{:3}\n'.format("TEAM", "INT")
             while i < 10:
-                str = str + '{:20}{:4}\n'.format(defenses_sorted[i].name, defenses_sorted[i].yards)
+                str = str + '{:25}{:3}\n'.format(defenses_sorted[i].team, defenses_sorted[i].ints)
                 i += 1
-        elif args[0].lower() == "receptions" or args[0].lower() == "recs":
-            defenses_sorted = sorted(defenses, key = lambda x: int(x.yards), reverse=True)
-            str = str + '{:20}{:4}\n'.format("NAME", "REC")
-            while i < 10:
-                str = str + '{:20}{:4}\n'.format(defenses_sorted[i].name, defenses_sorted[i].rec)
-                i += 1
-        elif args[0].lower() == "long" or args[0].lower() == "lng":
-            defenses_sorted = sorted(defenses, key = lambda x: int(x.long), reverse=True)
-            str = str + '{:20}{:4}\n'.format("NAME", "LNG")
-            while i < 10:
-                str = str + '{:20}{:4}\n'.format(defenses_sorted[i].name, defenses_sorted[i].long)
-                i += 1
-        elif args[0].lower() == "y/g":
-            str = str + '{:20}{:5}\n'.format("NAME", "Y/G")
-            defenses_sorted = sorted(defenses, key = lambda x: float(x.yg), reverse=True)
-            while i < 10:
-                str = str + '{:20}{:4}\n'.format(defenses_sorted[i].name, defenses_sorted[i].yg)
-                i += 1
+################################################################################################################
+
         elif args[0].lower() == "fumbles" or args[0].lower() == "fmb":
-            str = str + '{:20}{:5}\n'.format("NAME", "FMB")
-            defenses_sorted = sorted(defenses, key = lambda x: float(x.fmb), reverse=True)
-            count = 0
-            while i < len(defenses_sorted):
-                if count == 10:
-                    break
-                if(defenses_sorted[i].pos.lower() == "team_def"):
-                    str = str + '{:20}{:4}\n'.format(defenses_sorted[i].name, defenses_sorted[i].fmb)
-                    count += 1
+            defenses_sorted = sorted(defenses, key = lambda x: float(x.fumbles), reverse=True)
+            str = str + '{:25}{:3}\n'.format("TEAM", "FUM")
+            while i < 10:
+                str = str + '{:25}{:3}\n'.format(defenses_sorted[i].team, defenses_sorted[i].fumbles)
                 i += 1
+################################################################################################################
+
+        elif args[0].lower() == "turnovers":
+            defenses_sorted = sorted(defenses, key = lambda x: float(x.turnovers), reverse=True)
+            str = str + '{:25}{:3}\n'.format("TEAM", "TO")
+            while i < 10:
+                str = str + '{:25}{:3}\n'.format(defenses_sorted[i].team, defenses_sorted[i].turnovers)
+                i += 1
+################################################################################################################
+
+        elif args[0].lower() == "completions":
+            defenses_sorted = sorted(defenses, key = lambda x: float(x.cmp), reverse=False)
+            str = str + '{:25}{:3}\n'.format("TEAM", "CMP")
+            while i < 10:
+                str = str + '{:25}{:3}\n'.format(defenses_sorted[i].team, defenses_sorted[i].cmp)
+                i += 1
+################################################################################################################
         else:
             team_def_count = 0
             team_def_name = team_abr_map[args[i].lower()]
@@ -542,9 +540,9 @@ async def tdefense(ctx, *args):
                     str = str + '{:20}{:4}{:5}{:4}{:4}{:7}\n'.format(defenses[team_def_count].team[:19], defenses[team_def_count].points_allowed, defenses[team_def_count].yards_allowed, defenses[team_def_count].ints, defenses[team_def_count].fumbles, defenses[team_def_count].penalty_yards)
                     break
                 team_def_count += 1
+################################################################################################################
 
     if len(args) == 2:
-
         i = 0
         if args[0].lower() == "y/p" and args[1].lower() == "top":
             defenses_sorted = sorted(defenses, key = lambda x: float(x.ypp), reverse=False)
@@ -558,6 +556,8 @@ async def tdefense(ctx, *args):
             while i < 10:
                 str = str + '{:25}{:3}\n'.format(defenses_sorted[i].team, defenses_sorted[i].ypp)
                 i += 1
+################################################################################################################
+
         elif args[0].lower() == "turnovers" and args[1].lower() == "top":
             defenses_sorted = sorted(defenses, key = lambda x: float(x.turnovers), reverse=True)
             str = str + '{:25}{:3}\n'.format("TEAM", "TO")
@@ -570,8 +570,65 @@ async def tdefense(ctx, *args):
             while i < 10:
                 str = str + '{:25}{:3}\n'.format(defenses_sorted[i].team, defenses_sorted[i].turnovers)
                 i += 1
+################################################################################################################
 
+        elif args[0].lower() == "interceptions" and args[1].lower() == "top":
+            defenses_sorted = sorted(defenses, key = lambda x: float(x.ints), reverse=True)
+            str = str + '{:25}{:3}\n'.format("TEAM", "INT")
+            while i < 10:
+                str = str + '{:25}{:3}\n'.format(defenses_sorted[i].team, defenses_sorted[i].ints)
+                i += 1
+        elif args[0].lower() == "interceptions" and args[1].lower() == "bottom":
+            defenses_sorted = sorted(defenses, key = lambda x: float(x.ints), reverse=False)
+            str = str + '{:25}{:3}\n'.format("TEAM", "INT")
+            while i < 10:
+                str = str + '{:25}{:3}\n'.format(defenses_sorted[i].team, defenses_sorted[i].ints)
+                i += 1
+################################################################################################################
+
+        elif args[0].lower() == "fumbles" and args[1].lower() == "top":
+            defenses_sorted = sorted(defenses, key = lambda x: float(x.fumbles), reverse=True)
+            str = str + '{:25}{:3}\n'.format("TEAM", "FUM")
+            while i < 10:
+                str = str + '{:25}{:3}\n'.format(defenses_sorted[i].team, defenses_sorted[i].fumbles)
+                i += 1
+        elif args[0].lower() == "fumbles" and args[1].lower() == "bottom":
+            defenses_sorted = sorted(defenses, key = lambda x: float(x.fumbles), reverse=False)
+            str = str + '{:25}{:3}\n'.format("TEAM", "FUM")
+            while i < 10:
+                str = str + '{:25}{:3}\n'.format(defenses_sorted[i].team, defenses_sorted[i].fumbles)
+                i += 1
+################################################################################################################
+        elif args[0].lower() == "yards" and args[1].lower() == "top":
+            defenses_sorted = sorted(defenses, key = lambda x: float(x.yards_allowed), reverse=True)
+            str = str + '{:25}{:3}\n'.format("TEAM", "YDS")
+            while i < 10:
+                str = str + '{:25}{:3}\n'.format(defenses_sorted[i].team, defenses_sorted[i].yards_allowed)
+                i += 1
+        elif args[0].lower() == "yards" and args[1].lower() == "bottom":
+            defenses_sorted = sorted(defenses, key = lambda x: float(x.yards_allowed), reverse=False)
+            str = str + '{:25}{:3}\n'.format("TEAM", "YDS")
+            while i < 10:
+                str = str + '{:25}{:3}\n'.format(defenses_sorted[i].team, defenses_sorted[i].yards_allowed)
+                i += 1
+################################################################################################################
+
+        elif args[0].lower() == "penalties" and args[1].lower() == "top":
+            defenses_sorted = sorted(defenses, key = lambda x: float(x.penalty), reverse=True)
+            str = str + '{:25}{:3}\n'.format("TEAM", "PEN")
+            while i < 10:
+                str = str + '{:25}{:3}\n'.format(defenses_sorted[i].team, defenses_sorted[i].penalty)
+                i += 1
+        elif args[0].lower() == "penalties" and args[1].lower() == "bottom":
+            defenses_sorted = sorted(defenses, key = lambda x: float(x.penalty), reverse=False)
+            str = str + '{:25}{:3}\n'.format("TEAM", "PEN")
+            while i < 10:
+                str = str + '{:25}{:3}\n'.format(defenses_sorted[i].team, defenses_sorted[i].penalty)
+                i += 1
+
+################################################################################################################
     if len(args) > 2:
+        i = 0
         if args[0].lower() == "points" and args[1].lower() == "allowed" and args[2].lower() == "top":
             defenses_sorted = sorted(defenses, key = lambda x: int(x.points_allowed), reverse=False)
             str = str + '{:25}{:3}\n'.format("TEAM", "PA")
@@ -584,7 +641,98 @@ async def tdefense(ctx, *args):
             while i < 10:
                 str = str + '{:25}{:3}\n'.format(defenses_sorted[i].team, defenses_sorted[i].points_allowed)
                 i += 1
-
+################################################################################################################
+        elif args[0].lower() == "passing" and args[1].lower() == "yards" and args[2].lower() == "top":
+            defenses_sorted = sorted(defenses, key = lambda x: int(x.yards_allowed), reverse=False)
+            str = str + '{:25}{:3}\n'.format("TEAM", "PYD")
+            while i < 10:
+                str = str + '{:25}{:3}\n'.format(defenses_sorted[i].team, defenses_sorted[i].yards_allowed)
+                i += 1
+        elif args[0].lower() == "passing" and args[1].lower() == "yards" and args[2].lower() == "bottom":
+            defenses_sorted = sorted(defenses, key = lambda x: int(x.yards_allowed), reverse=True)
+            str = str + '{:25}{:3}\n'.format("TEAM", "PYD")
+            while i < 10:
+                str = str + '{:25}{:3}\n'.format(defenses_sorted[i].team, defenses_sorted[i].yards_allowed)
+                i += 1
+################################################################################################################
+        elif args[0].lower() == "passing" and args[1].lower() == "touchdowns" and args[2].lower() == "top":
+            defenses_sorted = sorted(defenses, key = lambda x: int(x.pass_tds), reverse=False)
+            str = str + '{:25}{:3}\n'.format("TEAM", "PTD")
+            while i < 10:
+                str = str + '{:25}{:3}\n'.format(defenses_sorted[i].team, defenses_sorted[i].pass_tds)
+                i += 1
+        elif args[0].lower() == "passing" and args[1].lower() == "touchdowns" and args[2].lower() == "bottom":
+            defenses_sorted = sorted(defenses, key = lambda x: int(x.pass_tds), reverse=True)
+            str = str + '{:25}{:3}\n'.format("TEAM", "PTD")
+            while i < 10:
+                str = str + '{:25}{:3}\n'.format(defenses_sorted[i].team, defenses_sorted[i].pass_tds)
+                i += 1
+################################################################################################################
+        elif args[0].lower() == "passing" and args[1].lower() == "y/a" and args[2].lower() == "top":
+            defenses_sorted = sorted(defenses, key = lambda x: int(x.pass_ypa), reverse=False)
+            str = str + '{:25}{:5}\n'.format("TEAM", "P Y/A")
+            while i < 10:
+                str = str + '{:25}{:5}\n'.format(defenses_sorted[i].team, defenses_sorted[i].pass_ypa)
+                i += 1
+        elif args[0].lower() == "passing" and args[1].lower() == "y/a" and args[2].lower() == "bottom":
+            defenses_sorted = sorted(defenses, key = lambda x: int(x.pass_ypa), reverse=True)
+            str = str + '{:25}{:5}\n'.format("TEAM", "P Y/A")
+            while i < 10:
+                str = str + '{:25}{:5}\n'.format(defenses_sorted[i].team, defenses_sorted[i].pass_ypa)
+                i += 1
+################################################################################################################
+        elif args[0].lower() == "rushing" and args[1].lower() == "touchdowns" and args[2].lower() == "top":
+            defenses_sorted = sorted(defenses, key = lambda x: int(x.rush_tds), reverse=False)
+            str = str + '{:25}{:3}\n'.format("TEAM", "RTD")
+            while i < 10:
+                str = str + '{:25}{:3}\n'.format(defenses_sorted[i].team, defenses_sorted[i].rush_tds)
+                i += 1
+        elif args[0].lower() == "rushing" and args[1].lower() == "touchdowns" and args[2].lower() == "bottom":
+            defenses_sorted = sorted(defenses, key = lambda x: int(x.rush_tds), reverse=True)
+            str = str + '{:25}{:3}\n'.format("TEAM", "RTD")
+            while i < 10:
+                str = str + '{:25}{:3}\n'.format(defenses_sorted[i].team, defenses_sorted[i].rush_tds)
+                i += 1
+################################################################################################################
+        elif args[0].lower() == "rushing" and args[1].lower() == "yards" and args[2].lower() == "top":
+            defenses_sorted = sorted(defenses, key = lambda x: int(x.rush_yards), reverse=False)
+            str = str + '{:25}{:3}\n'.format("TEAM", "RYD")
+            while i < 10:
+                str = str + '{:25}{:3}\n'.format(defenses_sorted[i].team, defenses_sorted[i].rush_yards)
+                i += 1
+        elif args[0].lower() == "rushing" and args[1].lower() == "yards" and args[2].lower() == "bottom":
+            defenses_sorted = sorted(defenses, key = lambda x: int(x.rush_yards), reverse=True)
+            str = str + '{:25}{:3}\n'.format("TEAM", "RYD")
+            while i < 10:
+                str = str + '{:25}{:3}\n'.format(defenses_sorted[i].team, defenses_sorted[i].rush_yards)
+                i += 1
+################################################################################################################
+        elif args[0].lower() == "rushing" and args[1].lower() == "y/a" and args[2].lower() == "top":
+            defenses_sorted = sorted(defenses, key = lambda x: int(x.rush_ypa), reverse=False)
+            str = str + '{:25}{:5}\n'.format("TEAM", "R Y/A")
+            while i < 10:
+                str = str + '{:25}{:5}\n'.format(defenses_sorted[i].team, defenses_sorted[i].rush_ypa)
+                i += 1
+        elif args[0].lower() == "rushing" and args[1].lower() == "y/a" and args[2].lower() == "bottom":
+            defenses_sorted = sorted(defenses, key = lambda x: int(x.rush_ypa), reverse=True)
+            str = str + '{:25}{:5}\n'.format("TEAM", "R Y/A")
+            while i < 10:
+                str = str + '{:25}{:5}\n'.format(defenses_sorted[i].team, defenses_sorted[i].rush_ypa)
+                i += 1
+################################################################################################################
+        elif args[0].lower() == "penalty" and args[1].lower() == "yards" and args[2].lower() == "top":
+            defenses_sorted = sorted(defenses, key = lambda x: int(x.penalty_yards), reverse=False)
+            str = str + '{:25}{:10}\n'.format("TEAM", "PEN YARDS")
+            while i < 10:
+                str = str + '{:25}{:10}\n'.format(defenses_sorted[i].team, defenses_sorted[i].penalty_yards)
+                i += 1
+        elif args[0].lower() == "penalty" and args[1].lower() == "y/a" and args[2].lower() == "bottom":
+            defenses_sorted = sorted(defenses, key = lambda x: int(x.penalty_yards), reverse=True)
+            str = str + '{:25}{:5}\n'.format("TEAM", "PEN YARDS")
+            while i < 10:
+                str = str + '{:25}{:5}\n'.format(defenses_sorted[i].team, defenses_sorted[i].penalty_yards)
+                i += 1
+################################################################################################################
         elif args[0].lower() == "compare":
             str = str + '{:20}{:4}{:5}{:4}{:4}{:7}\n'.format("NAME", "PA", "YDS", "INT", "FUM", "PEN/YDS")
             team_def_comps = []
@@ -605,6 +753,8 @@ async def tdefense(ctx, *args):
                         str = str + '{:20}{:4}{:5}{:4}{:4}{:7}\n'.format(defenses[team_def_count].team[:19], defenses[team_def_count].points_allowed, defenses[team_def_count].yards_allowed, defenses[team_def_count].ints, defenses[team_def_count].fumbles, defenses[team_def_count].penalty_yards)
                     k+=1
                 team_def_count += 1
+################################################################################################################
+
         else:
             str = "```\n"
     str = str + "\n```"
@@ -1138,7 +1288,7 @@ def read_token_settings():
     return token
 
 #main entry point for bot
-def testBot_main():
+def footballBot_main():
     token = read_token_settings()
     if token:
         client.run(token)
@@ -1147,4 +1297,4 @@ def testBot_main():
 
 
 if __name__ == '__main__':
-    testBot_main()
+    footballBot_main()
