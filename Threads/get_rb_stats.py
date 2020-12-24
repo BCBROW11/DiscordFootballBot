@@ -17,18 +17,19 @@ class get_rb_stats(Thread):
         Thread.__init__(self)
 
     def run(self):
-        try:
             while(True):
-                request = requests.get("https://www.pro-football-reference.com/years/2020/rushing.htm")
-                rb_soup = BeautifulSoup(request.content, 'html.parser')
-                rb_table_div = rb_soup.find("div", id="div_rushing")
-                table = rb_table_div.find("tbody")
-                rb_rows = table.find_all("tr", attrs={"class": None})
-                i = 1
-                for row in rb_rows:
-                    stats = row.find_all(attrs={"data-stat":True})
-                    self.runningbacks.append(runningback(stats[i].text, stats[i+1].text, stats[i+2].text, stats[i+3].text, stats[i+6].text, stats[i+7].text, stats[i+8].text, stats[i+10].text, stats[i+11].text, stats[i+12].text, stats[i+13].text))
-                print("runningbacks update done")
-                time.sleep(43200)
-        except Exception:
-            print("Excpetion in rb_stats: \n" + exception)
+                try:
+                    request = requests.get("https://www.pro-football-reference.com/years/2020/rushing.htm")
+                    rb_soup = BeautifulSoup(request.content, 'html.parser')
+                    rb_table_div = rb_soup.find("div", id="div_rushing")
+                    table = rb_table_div.find("tbody")
+                    rb_rows = table.find_all("tr", attrs={"class": None})
+                    i = 1
+                    for row in rb_rows:
+                        stats = row.find_all(attrs={"data-stat":True})
+                        self.runningbacks.append(runningback(stats[i].text, stats[i+1].text, stats[i+2].text, stats[i+3].text, stats[i+6].text, stats[i+7].text, stats[i+8].text, stats[i+10].text, stats[i+11].text, stats[i+12].text, stats[i+13].text))
+                    print("runningbacks update done")
+                    time.sleep(43200)
+                except Exception:
+                    print("Excpetion in rb_stats: \n" + exception)
+                    pass
