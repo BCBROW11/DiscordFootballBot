@@ -27,7 +27,22 @@ class get_injuries(Thread):
                     i = 0
                     for row in inj_rows:
                         stats = row.find_all(attrs={"data-stat":True})
-                        self.injuries.append(injury(stats[i].text, stats[i+1].text, stats[i+2].text, stats[i+3].text, stats[i+4].text, stats[i+5].text))
+                        if stats[i+1].text.lower() == "gnb":
+                            self.injuries.append(injury(stats[i].text, "GB", stats[i+2].text, stats[i+3].text, stats[i+4].text, stats[i+5].text))
+                        if stats[i+1].text.lower() == "sfo":
+                            self.injuries.append(injury(stats[i].text, "SF", stats[i+2].text, stats[i+3].text, stats[i+4].text, stats[i+5].text))
+                        if stats[i+1].text.lower() == "kan":
+                            self.injuries.append(injury(stats[i].text, "KC", stats[i+2].text, stats[i+3].text, stats[i+4].text, stats[i+5].text))
+                        if stats[i+1].text.lower() == "nor":
+                            self.injuries.append(injury(stats[i].text, "NO", stats[i+2].text, stats[i+3].text, stats[i+4].text, stats[i+5].text))
+                        if stats[i+1].text.lower() == "nwe":
+                            self.injuries.append(injury(stats[i].text, "NE", stats[i+2].text, stats[i+3].text, stats[i+4].text, stats[i+5].text))
+                        if stats[i+1].text.lower() == "lvr":
+                            self.injuries.append(injury(stats[i].text, "LV", stats[i+2].text, stats[i+3].text, stats[i+4].text, stats[i+5].text))
+                        if stats[i+1].text.lower() == "tam":
+                            self.injuries.append(injury(stats[i].text, "TB", stats[i+2].text, stats[i+3].text, stats[i+4].text, stats[i+5].text))
+                        else:
+                            self.injuries.append(injury(stats[i].text, stats[i+1].text, stats[i+2].text, stats[i+3].text, stats[i+4].text, stats[i+5].text))
                     print("injury update done")
                     time.sleep(43200)
                 except Exception:
