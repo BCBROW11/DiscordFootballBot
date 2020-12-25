@@ -19,6 +19,7 @@ from Threads.get_wr_stats import get_wr_stats
 from Threads.get_team_def_stats import get_team_def_stats
 from Threads.get_standings import get_standings
 from Threads.get_scores import get_scores
+from Threads.get_injuries import get_injuries
 
 from Helpers.convert_game_time import convert_game_time
 from Helpers.game import game
@@ -27,6 +28,8 @@ from Helpers.runningback import runningback
 from Helpers.receiver import receiver
 from Helpers.defend import defend
 from Helpers.team_defense import team_defense
+from Helpers.injury import injury
+
 
 # Create bot
 client = commands.Bot(command_prefix='$', help_command=None)
@@ -48,6 +51,7 @@ async def on_ready():
     t5 = get_wr_stats()
     t6 = get_def_stats()
     t7 = get_team_def_stats()
+    t8 = get_injuries()
     try:
         t1.start()
         t2.start()
@@ -56,6 +60,7 @@ async def on_ready():
         t5.start()
         t6.start()
         t7.start()
+        t8.start()
     except Exception:
         print("Threading error: \n" + Exception)
 
@@ -1266,6 +1271,32 @@ async def fbref(ctx, *args):
     await ctx.send(
         urlStr
     )
+#######################################################################################Injuries
+
+@client.command()
+async def injuries(ctx, *args):
+    str = "```\n"
+    injuries = t8.injuries
+    i = 0
+    while i < len(injuries):
+        if args[0].lower() == injuries[i].team.lower():
+            if(injuries[i].status.lower() == "questionable"):
+                injuries[i].status = "Q"
+            if(injuries[i].status.lower() == "doubtful"):
+                injuries[i].status = "D"
+            if(injuries[i].status.lower() == "probable"):
+                injuries[i].status = "P"
+            str = str + '{:20}{:4}{:4}{:10}{:5}\n'.format(injuries[i].name[:19], injuries[i].team, injuries[i].pos, injuries[i].type[:9], injuries[i].status[:5])
+        i = i+1
+    if str == "```\n":
+        await ctx.send(
+            "Invalid command. Try $injuries <team abbreviation>"
+        )
+        return
+    str = str + "\n```"
+    await ctx.send(
+        str
+    )
 #######################################################################################HELP
 @client.command()
 async def help(ctx, *args):
@@ -1277,7 +1308,7 @@ async def help(ctx, *args):
         embedVar.add_field(name="defense", value = "Individual defender stats", inline=True)
         embedVar.add_field(name="tdefense", value = "Team defense stats", inline=True)
         embedVar.add_field(name="fbref", value = "PFBR player page", inline=True)
-        embedVar.add_field(name="Additional Help", value = "Type $help command for more info on a command.", inline=True)
+        embedVar.add_field(name="Additional Help", value = "Type $help command for more info on a command. You can also type $help category for more info on a category.", inline=True)
         await ctx.send(
             embed = embedVar
         )
