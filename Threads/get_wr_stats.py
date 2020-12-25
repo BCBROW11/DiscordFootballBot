@@ -28,7 +28,9 @@ class get_wr_stats(Thread):
                     i = 1
                     for row in wr_rows:
                         stats = row.find_all(attrs={"data-stat":True})
-                        self.receivers.append(receiver(stats[i].text, stats[i+1].text, stats[i+2].text, stats[i+3].text, stats[i+6].text, stats[i+7].text, stats[i+8].text, stats[i+9].text, stats[i+10].text, stats[i+11].text, stats[i+12].text, stats[i+13].text, stats[i+14].text, stats[i+16].text, stats[i+17].text))
+                        str = stats[i].text
+                        str = str.replace("*", "")
+                        self.receivers.append(receiver(str, stats[i+1].text, stats[i+2].text, stats[i+3].text, stats[i+6].text, stats[i+7].text, stats[i+8].text, stats[i+9].text, stats[i+10].text, stats[i+11].text, stats[i+12].text, stats[i+13].text, stats[i+14].text, stats[i+16].text, stats[i+17].text))
                     print("receivers update done")
                     time.sleep(43200)
                 except Exception:

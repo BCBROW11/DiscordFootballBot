@@ -27,7 +27,9 @@ class get_rb_stats(Thread):
                     i = 1
                     for row in rb_rows:
                         stats = row.find_all(attrs={"data-stat":True})
-                        self.runningbacks.append(runningback(stats[i].text, stats[i+1].text, stats[i+2].text, stats[i+3].text, stats[i+6].text, stats[i+7].text, stats[i+8].text, stats[i+10].text, stats[i+11].text, stats[i+12].text, stats[i+13].text))
+                        str = stats[i].text
+                        str = str.replace("*", "")
+                        self.runningbacks.append(runningback(str, stats[i+1].text, stats[i+2].text, stats[i+3].text, stats[i+6].text, stats[i+7].text, stats[i+8].text, stats[i+10].text, stats[i+11].text, stats[i+12].text, stats[i+13].text))
                     print("runningbacks update done")
                     time.sleep(43200)
                 except Exception:

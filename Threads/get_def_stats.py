@@ -47,7 +47,9 @@ class get_def_stats(Thread):
                             stats[i+20].insert(0, "0")
                         if stats[i+21].text == "":
                             stats[i+21].insert(0, "0")
-                        self.defends.append(defend(stats[i].text, stats[i+1].text, stats[i+2].text, stats[i+3].text, stats[i+6].text, stats[i+10].text, stats[i+11].text, stats[i+13].text, stats[i+16].text, stats[i+17].text, stats[i+18].text, stats[i+19].text, stats[i+20].text, stats[i+21].text))
+                        str = stats[i].text
+                        str = str.replace("*", "")
+                        self.defends.append(defend(str, stats[i+1].text, stats[i+2].text, stats[i+3].text, stats[i+6].text, stats[i+10].text, stats[i+11].text, stats[i+13].text, stats[i+16].text, stats[i+17].text, stats[i+18].text, stats[i+19].text, stats[i+20].text, stats[i+21].text))
                     print("defense update done")
                     time.sleep(43200)
                 except Exception:

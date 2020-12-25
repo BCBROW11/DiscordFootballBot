@@ -27,7 +27,9 @@ class get_qb_stats(Thread):
                     i = 1
                     for row in qb_rows:
                         stats = row.find_all(attrs={"data-stat":True})
-                        self.quarterbacks.append(quarterback(stats[i].text, stats[i+1].text, stats[i+2].text, stats[i+3].text, stats[i+7].text, stats[i+8].text, stats[i+9].text, stats[i+10].text, stats[i+11].text, stats[i+13].text, stats[i+21].text, stats[i+23].text))
+                        str = stats[i].text
+                        str = str.replace("*", "")
+                        self.quarterbacks.append(quarterback(str, stats[i+1].text, stats[i+2].text, stats[i+3].text, stats[i+7].text, stats[i+8].text, stats[i+9].text, stats[i+10].text, stats[i+11].text, stats[i+13].text, stats[i+21].text, stats[i+23].text))
                     print("quarterbacks update done")
                     time.sleep(43200)
                 except Exception:
