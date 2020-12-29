@@ -13,12 +13,13 @@ global quarterbacks
 class get_qb_stats(Thread):
 
     def __init__(self):
-        self.quarterbacks = []
+        self.quarterbacks = None
         Thread.__init__(self)
 
     def run(self):
             while(True):
                 try:
+                    self.quarterbacks = []
                     request = requests.get("https://www.pro-football-reference.com/years/2020/passing.htm")
                     qb_soup = BeautifulSoup(request.content, 'html.parser')
                     qb_table_div = qb_soup.find("div", id="div_passing")

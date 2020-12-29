@@ -13,12 +13,13 @@ global injuries
 class get_injuries(Thread):
 
     def __init__(self):
-        self.injuries = []
+        self.injuries = None
         Thread.__init__(self)
 
     def run(self):
             while(True):
                 try:
+                    self.injuries = []
                     request = requests.get("https://www.pro-football-reference.com/players/injuries.htm")
                     inj_soup = BeautifulSoup(request.content, 'html.parser')
                     inj_table_div = inj_soup.find("div", id="div_injuries")

@@ -13,12 +13,13 @@ global runningbacks
 class get_rb_stats(Thread):
 
     def __init__(self):
-        self.runningbacks = []
+        self.runningbacks = None
         Thread.__init__(self)
 
     def run(self):
             while(True):
                 try:
+                    self.runningbacks = []
                     request = requests.get("https://www.pro-football-reference.com/years/2020/rushing.htm")
                     rb_soup = BeautifulSoup(request.content, 'html.parser')
                     rb_table_div = rb_soup.find("div", id="div_rushing")
