@@ -34,5 +34,5 @@ class get_qb_stats(Thread):
                     print("quarterbacks update done")
                     time.sleep(43200)
                 except Exception:
-                    print("Excpetion in qb_stats: \n" + exception)
+                    print("Excpetion in qb_stats")
                     pass

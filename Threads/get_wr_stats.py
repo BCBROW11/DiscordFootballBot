@@ -34,5 +34,5 @@ class get_wr_stats(Thread):
                     print("receivers update done")
                     time.sleep(43200)
                 except Exception:
-                    print("Excpetion in wr_stats: \n" + exception)
+                    print("Excpetion in wr_stats")
                     pass

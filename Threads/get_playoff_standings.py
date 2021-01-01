@@ -27,5 +27,5 @@ class get_def_stats(Thread):
                     print("defense update done")
                     time.sleep(43200)
                 except Exception:
-                    print("Excpetion in def_stats: \n" + exception)
+                    print("Excpetion in def_stats")
                     pass

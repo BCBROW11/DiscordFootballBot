@@ -34,5 +34,5 @@ class get_rb_stats(Thread):
                     print("runningbacks update done")
                     time.sleep(43200)
                 except Exception:
-                    print("Excpetion in rb_stats: \n" + exception)
+                    print("Excpetion in rb_stats")
                     pass

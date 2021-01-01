@@ -13,12 +13,11 @@ get_scores is a thread that queries the scorestrip every 15 seconds to provide l
 global json_score
 class get_scores(Thread):
     def __init__(self):
-        self.json_score = None        
+        self.json_score = None
         Thread.__init__(self)
     def run(self):
             while(True):
                 try:
-                    self.json_score = None
                     session = requests.Session()
                     retry = Retry(connect=3, backoff_factor=0.5)
                     adapter = HTTPAdapter(max_retries=retry)
@@ -32,5 +31,5 @@ class get_scores(Thread):
                     self.json_score = json.loads(str)
                     time.sleep(15)
                 except Exception:
-                    print("Excpetion in get_scores: \n" + exception)
+                    print("Excpetion in get_scores.")
                     pass

@@ -32,5 +32,5 @@ class get_team_def_stats(Thread):
                     print("team defense update done")
                     time.sleep(43200)
                 except Exception:
-                    print("Excpetion in get_team_def: \n" + exception)
+                    print("Excpetion in get_team_def")
                     pass

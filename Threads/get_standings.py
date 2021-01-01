@@ -62,5 +62,5 @@ class get_standings(Thread):
                     print("standings updated")
                     time.sleep(43200)
                 except Exception:
-                    print("Excpetion in get_standings: \n" + exception)
+                    print("Excpetion in get_standings")
                     pass
