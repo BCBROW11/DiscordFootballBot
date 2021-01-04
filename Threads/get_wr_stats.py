@@ -19,7 +19,7 @@ class get_wr_stats(Thread):
     def run(self):
             while(True):
                 try:
-
+                    self.receivers = []
                     request = requests.get("https://www.pro-football-reference.com/years/2020/receiving.htm")
                     wr_soup = BeautifulSoup(request.content, 'html.parser')
                     wr_table_div = wr_soup.find("div", id="div_receiving")
